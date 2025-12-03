@@ -39,6 +39,10 @@ class Point:
     def distance_to(self, other):
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
     
+    def distance_squared_to(self, other):
+        """Optimized distance calculation without sqrt for comparisons"""
+        return (self.x - other.x)**2 + (self.y - other.y)**2
+    
     def update(self):
         # Smooth movement
         self.x += (self.target_x - self.x) * 0.1
@@ -138,6 +142,10 @@ class KMeansGame:
         self.input_text = ""
         self.input_field = "points"  # "points" or "k"
         
+        # Performance optimization: timer for auto-iteration
+        self.last_iteration_time = 0
+        self.iteration_delay = 150  # milliseconds between iterations
+        
         # Generate random points
         self.generate_points(50)
         self.reset_centroids()
@@ -161,15 +169,19 @@ class KMeansGame:
     def assign_clusters(self):
         """Assign each point to nearest centroid"""
         changes = 0
+        particle_count = 0
+        max_particles_per_step = 10  # Limit particle effects
+        
         for point in self.points:
             prev_cluster = point.cluster
-            min_dist = float('inf')
+            min_dist_sq = float('inf')
             closest_centroid = 0
             
             for i, centroid in enumerate(self.centroids):
-                dist = point.distance_to(centroid)
-                if dist < min_dist:
-                    min_dist = dist
+                # Use squared distance to avoid expensive sqrt
+                dist_sq = point.distance_squared_to(centroid)
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
                     closest_centroid = i
             
             if point.cluster != closest_centroid:
@@ -178,10 +190,11 @@ class KMeansGame:
                 point.cluster = closest_centroid
                 point.transition = 0
                 point.scale = 1.5
-                # Add particle effect
-                if point.prev_cluster is not None:
+                # Add particle effect (limited to prevent performance issues)
+                if point.prev_cluster is not None and particle_count < max_particles_per_step:
                     self.particles.append(ParticleEffect(point.x, point.y, 
                                         self.centroids[point.cluster].color))
+                    particle_count += 1
         
         return changes == 0
     
@@ -210,13 +223,17 @@ class KMeansGame:
                 self.converged = True
     
     def draw_glow(self, pos, color, radius):
-        """Draw a glowing circle effect"""
-        for i in range(3, 0, -1):
-            alpha = 40 * i
-            glow_color = (*color, alpha)
-            s = pygame.Surface((radius*2*i, radius*2*i), pygame.SRCALPHA)
-            pygame.draw.circle(s, glow_color, (radius*i, radius*i), radius*i)
-            self.screen.blit(s, (pos[0]-radius*i, pos[1]-radius*i))
+        """Draw a glowing circle effect (optimized)"""
+        # Only draw glow if radius is reasonable
+        if radius > 0:
+            max_radius = int(radius * 3)
+            s = pygame.Surface((max_radius*2, max_radius*2), pygame.SRCALPHA)
+            for i in range(3, 0, -1):
+                alpha = 40 * i
+                glow_color = (*color, alpha)
+                r = int(radius * i)
+                pygame.draw.circle(s, glow_color, (max_radius, max_radius), r)
+            self.screen.blit(s, (pos[0]-max_radius, pos[1]-max_radius))
     
     def lerp_color(self, c1, c2, t):
         """Linear interpolation between two colors"""
@@ -225,31 +242,31 @@ class KMeansGame:
     def draw(self):
         self.screen.fill(BG_COLOR)
         
-        # Draw connections from points to centroids (faint lines)
+        # Optimized: Use single surface for all connection lines
+        connection_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         for point in self.points:
             if point.cluster is not None:
                 centroid = self.centroids[point.cluster]
                 color = (*centroid.color, 30)
-                s = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-                pygame.draw.line(s, color, (int(point.x), int(point.y)), 
+                pygame.draw.line(connection_surface, color, (int(point.x), int(point.y)), 
                                (int(centroid.x), int(centroid.y)), 1)
-                self.screen.blit(s, (0, 0))
+        self.screen.blit(connection_surface, (0, 0))
         
         # Draw centroid glows
         for centroid in self.centroids:
             self.draw_glow((int(centroid.x), int(centroid.y)), 
                           centroid.color, int(centroid.glow_radius))
         
-        # Draw trails for points
+        # Optimized: Use single surface for all trails
+        trail_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         for point in self.points:
             if len(point.trail) > 1 and point.cluster is not None:
                 color = self.centroids[point.cluster].color
                 for i in range(len(point.trail) - 1):
                     alpha = int((i / len(point.trail)) * 100)
                     trail_color = (*color, alpha)
-                    s = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-                    pygame.draw.line(s, trail_color, point.trail[i], point.trail[i+1], 2)
-                    self.screen.blit(s, (0, 0))
+                    pygame.draw.line(trail_surface, trail_color, point.trail[i], point.trail[i+1], 2)
+        self.screen.blit(trail_surface, (0, 0))
         
         # Draw points with color transitions
         for point in self.points:
@@ -479,16 +496,17 @@ class KMeansGame:
                         self.particles.append(ParticleEffect(mx, my, COLORS[random.randint(0, len(COLORS)-1)]))
                 
                 elif event.button == 3:  # Right click - move centroid
-                    min_dist = float('inf')
+                    min_dist_sq = float('inf')
                     nearest_centroid = None
+                    threshold_sq = 40 * 40  # 40 pixels squared
                     
                     for centroid in self.centroids:
-                        dist = math.sqrt((centroid.x - mx)**2 + (centroid.y - my)**2)
-                        if dist < min_dist:
-                            min_dist = dist
+                        dist_sq = (centroid.x - mx)**2 + (centroid.y - my)**2
+                        if dist_sq < min_dist_sq:
+                            min_dist_sq = dist_sq
                             nearest_centroid = centroid
                     
-                    if nearest_centroid and min_dist < 40:
+                    if nearest_centroid and min_dist_sq < threshold_sq:
                         nearest_centroid.target_x = mx
                         nearest_centroid.target_y = my
                         nearest_centroid.x = mx
@@ -498,13 +516,16 @@ class KMeansGame:
         while self.running:
             dt = self.clock.tick(FPS)
             self.fps = self.clock.get_fps() if self.clock.get_fps() > 0 else 60
+            current_time = pygame.time.get_ticks()
             
             self.handle_events()
             self.update()
             
+            # Optimized: Use proper timer instead of modulo
             if self.auto_iterate and not self.converged:
-                if pygame.time.get_ticks() % 15 == 0:  # Slow down iterations
+                if current_time - self.last_iteration_time >= self.iteration_delay:
                     self.kmeans_step()
+                    self.last_iteration_time = current_time
             
             self.draw()
         
