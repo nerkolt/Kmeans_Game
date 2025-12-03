@@ -69,8 +69,8 @@ class Centroid:
     
     def update(self):
         # Smooth movement animation
-        self.x += (self.target_x - self.x) * 0.2
-        self.y += (self.target_y - self.y) * 0.2
+        self.x += (self.target_x - self.x) * 0.08
+        self.y += (self.target_y - self.y) * 0.08
         
         # Pulsing animation
         self.pulse += 0.1
