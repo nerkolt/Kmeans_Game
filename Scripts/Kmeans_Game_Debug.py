@@ -332,15 +332,8 @@ class KMeansGame:
     def draw_debug_panel(self):
         """Draw debug information panel"""
         panel_width = 220
-        panel_height = 200
         panel_x = WIDTH - panel_width - 10
         panel_y = 10
-        
-        # Semi-transparent background
-        s = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        pygame.draw.rect(s, (*UI_BG, 230), (0, 0, panel_width, panel_height))
-        pygame.draw.rect(s, COLORS[3], (0, 0, panel_width, panel_height), 2)
-        self.screen.blit(s, (panel_x, panel_y))
         
         # Debug info
         debug_info = [
@@ -361,12 +354,27 @@ class KMeansGame:
             count = sum(1 for p in self.points if p.cluster == i)
             debug_info.append((f"  Cluster {i+1}: {count}", self.centroids[i].color))
         
+        # Calculate dynamic height based on content
+        line_height = 18
+        padding = 20  # Top and bottom padding
+        num_lines = len([item for item in debug_info if item[0]])  # Count non-empty lines
+        panel_height = num_lines * line_height + padding
+        
+        # Ensure minimum height and maximum height (to prevent going off screen)
+        panel_height = max(150, min(panel_height, HEIGHT - 140))  # Leave space for bottom UI
+        
+        # Semi-transparent background
+        s = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        pygame.draw.rect(s, (*UI_BG, 230), (0, 0, panel_width, panel_height))
+        pygame.draw.rect(s, COLORS[3], (0, 0, panel_width, panel_height), 2)
+        self.screen.blit(s, (panel_x, panel_y))
+        
         y = panel_y + 10
         for text, color in debug_info:
             if text:
                 surface = self.tiny_font.render(text, True, color)
                 self.screen.blit(surface, (panel_x + 10, y))
-            y += 18
+            y += line_height
     
     def draw_input_dialog(self):
         """Draw input dialog for entering values"""
