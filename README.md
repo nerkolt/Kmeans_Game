@@ -50,7 +50,7 @@ Perfect for:
 
 ```bash
 # Using Git
-git clone https://github.com/yourusername/Kmeans_Game.git
+git clone https://github.com/nerkolt/Kmeans_Game.git
 cd Kmeans_Game
 
 # Or download and extract the ZIP file
