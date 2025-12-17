@@ -99,3 +99,101 @@ def update_medoids(points, centroids, candidate_limit=25):
             centroid.target_x = best_point.x
             centroid.target_y = best_point.y
 
+
+def dbscan(points, eps, min_samples):
+    """
+    Density-based clustering (DBSCAN).
+
+    - eps: neighborhood radius (in the same coordinate system as point.x/point.y, i.e. pixels)
+    - min_samples: minimum number of points (including the point itself) required to form a core point
+
+    Writes cluster labels into point.cluster:
+    - -1 = noise
+    - 0..(k-1) = cluster id
+
+    Returns the number of clusters found.
+    """
+    if not points:
+        return 0
+
+    eps = float(max(1.0, eps))
+    min_samples = int(max(1, min_samples))
+    eps_sq = eps * eps
+    n = len(points)
+
+    # Spatial hash grid to reduce neighbor search cost vs naive O(n^2)
+    cell = eps
+    grid = {}
+    for idx, p in enumerate(points):
+        gx = int(p.x // cell)
+        gy = int(p.y // cell)
+        grid.setdefault((gx, gy), []).append(idx)
+
+    def region_query(i):
+        p = points[i]
+        gx = int(p.x // cell)
+        gy = int(p.y // cell)
+        out = []
+        for yy in (gy - 1, gy, gy + 1):
+            for xx in (gx - 1, gx, gx + 1):
+                cand = grid.get((xx, yy))
+                if not cand:
+                    continue
+                for j in cand:
+                    q = points[j]
+                    dx = p.x - q.x
+                    dy = p.y - q.y
+                    if (dx * dx + dy * dy) <= eps_sq:
+                        out.append(j)
+        return out
+
+    # Reset labels
+    for p in points:
+        p.cluster = None
+
+    visited = [False] * n
+    cluster_id = 0
+
+    for i in range(n):
+        if visited[i]:
+            continue
+        visited[i] = True
+
+        neigh = region_query(i)
+        if len(neigh) < min_samples:
+            points[i].cluster = -1
+            continue
+
+        # New cluster
+        points[i].cluster = cluster_id
+        seeds = list(neigh)
+        in_seed = [False] * n
+        for s in seeds:
+            in_seed[s] = True
+        # Expand cluster
+        k = 0
+        while k < len(seeds):
+            j = seeds[k]
+            if not visited[j]:
+                visited[j] = True
+                neigh2 = region_query(j)
+                if len(neigh2) >= min_samples:
+                    # Add new neighbors (dedupe via visited/label checks)
+                    for t in neigh2:
+                        if not in_seed[t]:
+                            seeds.append(t)
+                            in_seed[t] = True
+
+            if points[j].cluster is None or points[j].cluster == -1:
+                points[j].cluster = cluster_id
+            k += 1
+
+        cluster_id += 1
+
+    # Any remaining unlabeled points are noise
+    for p in points:
+        if p.cluster is None:
+            p.cluster = -1
+
+    return cluster_id
+

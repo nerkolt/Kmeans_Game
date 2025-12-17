@@ -13,7 +13,7 @@ class MenuScene:
     Accessible main menu:
     - Keyboard: UP/DOWN select, LEFT/RIGHT change, ENTER activate
     - Mouse: click rows to select; click actions to activate
-    - Shortcuts: 1-4 datasets, 5/6 algorithms, B battle, V voronoi, I import, O export
+    - Shortcuts: 1-4 datasets, 5/6/7 algorithms, B battle, V voronoi, I import, O export
     """
 
     def __init__(self, app, initial=None):
@@ -22,12 +22,14 @@ class MenuScene:
         initial = initial or {}
 
         self.menu_index = 0
-        self.menu_algorithm = initial.get("algorithm", "kmeans")  # kmeans/kmedoids
+        self.menu_algorithm = initial.get("algorithm", "kmeans")  # kmeans/kmedoids/dbscan
         self.menu_dataset = initial.get("dataset", "random")  # random/blobs/moons/circles/csv
         self.menu_points = int(initial.get("points", 50))
         self.menu_k = int(initial.get("k", 3))
         self.menu_start_mode = initial.get("start_mode", "single")  # single/battle
         self.menu_voronoi = bool(initial.get("voronoi", False))
+        self.menu_dbscan_eps = int(initial.get("dbscan_eps", 45))
+        self.menu_dbscan_min_samples = int(initial.get("dbscan_min_samples", 5))
 
         self.csv_points = list(initial.get("csv_points", []))  # list[(x,y)]
 
@@ -51,7 +53,7 @@ class MenuScene:
                 "type": "choice",
                 "label": "Algorithm (A)",
                 "value": self.menu_algorithm,
-                "choices": [("kmeans", "K-Means"), ("kmedoids", "K-Medoids")],
+                "choices": [("kmeans", "K-Means"), ("kmedoids", "K-Medoids"), ("dbscan", "DBSCAN")],
             },
             {
                 "key": "dataset",
@@ -68,6 +70,16 @@ class MenuScene:
             },
             {"key": "points", "type": "int", "label": "Points", "value": self.menu_points, "min": 1, "max": 500, "step": 5},
             {"key": "k", "type": "int", "label": "Clusters (K)", "value": self.menu_k, "min": 1, "max": 10, "step": 1},
+            {"key": "dbscan_eps", "type": "int", "label": "DBSCAN eps (px)", "value": self.menu_dbscan_eps, "min": 5, "max": 200, "step": 5},
+            {
+                "key": "dbscan_min_samples",
+                "type": "int",
+                "label": "DBSCAN min_samples",
+                "value": self.menu_dbscan_min_samples,
+                "min": 2,
+                "max": 30,
+                "step": 1,
+            },
             {
                 "key": "start_mode",
                 "type": "choice",
@@ -95,6 +107,10 @@ class MenuScene:
             self.menu_start_mode = value
         elif key == "voronoi":
             self.menu_voronoi = bool(value)
+        elif key == "dbscan_eps":
+            self.menu_dbscan_eps = int(value)
+        elif key == "dbscan_min_samples":
+            self.menu_dbscan_min_samples = int(value)
 
         self._regen_preview()
 
@@ -159,6 +175,8 @@ class MenuScene:
             "battle_mode": (self.menu_start_mode == "battle"),
             "voronoi": self.menu_voronoi,
             "csv_points": list(self.csv_points),
+            "dbscan_eps": self.menu_dbscan_eps,
+            "dbscan_min_samples": self.menu_dbscan_min_samples,
         }
         self.app.set_scene(GameScene(self.app, settings))
 
@@ -202,6 +220,9 @@ class MenuScene:
             return
         if event.key == pygame.K_6:
             self._apply_item_value("algorithm", "kmedoids")
+            return
+        if event.key == pygame.K_7:
+            self._apply_item_value("algorithm", "dbscan")
             return
         if event.key == pygame.K_b:
             self._apply_item_value("start_mode", "battle" if self.menu_start_mode != "battle" else "single")

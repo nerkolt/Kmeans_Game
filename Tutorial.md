@@ -53,10 +53,19 @@ When the app starts you’ll see a **Main Menu** where you can pick:
 | `O` | **Export CSV** (x,y + cluster labels) |
 | `5` | Select **K‑Means** |
 | `6` | Select **K‑Medoids** |
+| `7` | Select **DBSCAN** |
 | `1` | Generate **Blobs** dataset |
 | `2` | Generate **Moons** dataset |
 | `3` | Generate **Circles** dataset |
 | `4` | Generate **Random** dataset |
+
+### DBSCAN notes
+
+- DBSCAN is **density-based** and does **not** use K.
+- It uses two parameters:
+  - `eps`: neighborhood radius (pixels)
+  - `min_samples`: points needed to form a dense region
+- Points labeled as **noise/outliers** are shown as cluster `-1`.
 
 ## What to try (recommended for the report/demo)
 

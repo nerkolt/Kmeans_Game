@@ -45,7 +45,8 @@ Perfect for:
 - **Convergence Graph**: Visualize inertia decreasing over iterations
 - **Elbow Method**: Automatically test K values to find optimal cluster count
 - **Voronoi / Decision Regions**: Visualize cluster regions in the plane
-- **Battle Mode (A/B)**: Compare K-Means vs K-Medoids side-by-side on the same data
+- **DBSCAN (Density-Based Clustering)**: Cluster non-linear shapes and detect **noise/outliers** (no K required)
+- **Battle Mode (A/B)**: Compare algorithms side-by-side on the same data (K-Means / K-Medoids / DBSCAN)
 - **CSV Import/Export**: Load real datasets and export clustered results
 - **Advanced Statistics**: Detailed cluster quality metrics (compactness, separation, variance)
 - **Cluster Quality Metrics**: Per-cluster analysis with color-coded visualization
@@ -120,7 +121,7 @@ python Kmeans_Game_Debug.py
 #### Basic Controls
 | Key | Action |
 |-----|--------|
-| `SPACE` | Run **one step** of K-Means algorithm |
+| `SPACE` | Run **one step** of the selected algorithm |
 | `A` | Toggle **auto-iteration** (runs until convergence) |
 | `R` | **Reset** with new random centroids |
 | `P` | Open dialog to set number of points (1-500) |
@@ -128,6 +129,9 @@ python Kmeans_Game_Debug.py
 | `↑` / `↓` | Quickly increase/decrease K |
 | `D` | Toggle debug panel (top-right) |
 | `C` | Clear all points |
+| `5` | Select **K-Means** |
+| `6` | Select **K-Medoids** |
+| `7` | Select **DBSCAN** |
 | `ESC` | Cancel input dialog / Close window |
 | `ENTER` | Confirm input in dialog |
 
@@ -174,6 +178,7 @@ Press `D` to toggle the debug overlay (top-right corner). It displays:
 - **Particles**: Active particle effects count
 - **Converged**: Whether the algorithm has converged
 - **Inertia (WCSS)**: Within-Cluster Sum of Squares (lower is better)
+- **DBSCAN eps/min_samples**: DBSCAN density parameters (when using DBSCAN)
 - **Dataset**: Current dataset type (random/blobs/moons/circles)
 - **Cluster Sizes**: Point count per cluster (color-coded)
 

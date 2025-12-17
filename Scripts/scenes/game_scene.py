@@ -36,14 +36,25 @@ class GameScene:
         self.particles_b = []
 
         self.k = int(settings.get("k", 3))
-        self.algorithm = settings.get("algorithm", "kmeans")  # kmeans/kmedoids
-        self.algorithm_b = "kmedoids" if self.algorithm == "kmeans" else "kmeans"
+        self.algorithm = settings.get("algorithm", "kmeans")  # kmeans/kmedoids/dbscan
+        if self.algorithm == "kmeans":
+            self.algorithm_b = "kmedoids"
+        elif self.algorithm == "kmedoids":
+            self.algorithm_b = "kmeans"
+        else:
+            self.algorithm_b = "kmeans"
         self.dataset_type = settings.get("dataset", "random")
 
         self.battle_mode = bool(settings.get("battle_mode", False))
         self.show_voronoi = bool(settings.get("voronoi", False))
 
         self.csv_points = list(settings.get("csv_points", []))
+
+        # DBSCAN params (pixels)
+        self.dbscan_eps = int(settings.get("dbscan_eps", 45))
+        self.dbscan_min_samples = int(settings.get("dbscan_min_samples", 5))
+        self._dbscan_clusters_a = 0
+        self._dbscan_clusters_b = 0
 
         self.auto_iterate = False
         self.iteration_count = 0
@@ -161,7 +172,7 @@ class GameScene:
             into_list.append(Centroid(x, y, COLORS[i % len(COLORS)]))
 
     def reset_algorithm(self):
-        # Shared centroid starting positions (fair for battle mode)
+        # Shared centroid starting positions (fair for battle mode) for centroid-based algorithms.
         coords = []
         for i in range(self.k):
             if self.points:
@@ -175,9 +186,16 @@ class GameScene:
                     )
                 )
 
-        self._reset_centroids(self.centroids, coords=coords)
+        if self.algorithm in ("kmeans", "kmedoids"):
+            self._reset_centroids(self.centroids, coords=coords)
+        else:
+            self.centroids.clear()
+
         if self.battle_mode:
-            self._reset_centroids(self.centroids_b, coords=coords)
+            if self.algorithm_b in ("kmeans", "kmedoids"):
+                self._reset_centroids(self.centroids_b, coords=coords)
+            else:
+                self.centroids_b.clear()
         else:
             self.centroids_b.clear()
 
@@ -202,11 +220,25 @@ class GameScene:
         self.inertia_history_b = []
         self.elbow_data = []
         self.show_elbow = False
+        self._dbscan_clusters_a = 0
+        self._dbscan_clusters_b = 0
 
         self._invalidate_voronoi_cache()
 
     def _step_side(self, points, centroids, particles, algorithm_name, inertia_history):
-        if not points or not centroids:
+        if not points:
+            return True
+
+        if algorithm_name == "dbscan":
+            # DBSCAN is one-shot (no iterative centroid updates)
+            clusters = algorithms.dbscan(points, eps=self.dbscan_eps, min_samples=self.dbscan_min_samples)
+            if points is self.points:
+                self._dbscan_clusters_a = clusters
+            else:
+                self._dbscan_clusters_b = clusters
+            return True
+
+        if not centroids:
             return True
 
         no_changes = algorithms.assign_clusters(points, centroids, particles=particles, max_particles_per_step=10)
@@ -241,7 +273,12 @@ class GameScene:
         if self.battle_mode:
             return
         self.battle_mode = True
-        self.algorithm_b = "kmedoids" if self.algorithm == "kmeans" else "kmeans"
+        if self.algorithm == "kmeans":
+            self.algorithm_b = "kmedoids"
+        elif self.algorithm == "kmedoids":
+            self.algorithm_b = "kmeans"
+        else:
+            self.algorithm_b = "kmeans"
         self.points_b = [Point(p.x, p.y) for p in self.points]
         self.reset_algorithm()
 
@@ -326,6 +363,9 @@ class GameScene:
         self._invalidate_voronoi_cache()
 
     def calculate_cluster_metrics(self):
+        # Only meaningful for centroid-based clustering.
+        if self.algorithm == "dbscan" or not self.centroids:
+            return {}
         metrics = {}
         for i in range(self.k):
             cluster_points = [p for p in self.points if p.cluster == i]
@@ -485,6 +525,10 @@ class GameScene:
                 self.algorithm = "kmedoids"
                 self.algorithm_b = "kmeans"
                 self.reset_algorithm()
+            elif event.key == pygame.K_7:
+                self.algorithm = "dbscan"
+                self.algorithm_b = "kmeans"
+                self.reset_algorithm()
             elif event.key == pygame.K_1:
                 n = len(self.points) if self.points else 50
                 self.dataset_type = "blobs"
@@ -616,6 +660,19 @@ class GameScene:
     def _draw_model_view(self, points, centroids, particles, view_rect, x_scale, vor_cache, side_label, status_lines=None):
         screen = self.app.screen
 
+        def dbscan_color_for_cluster(cid):
+            # Noise
+            if cid == -1:
+                return (120, 120, 135)
+            # Reuse palette first, then deterministic extra colors.
+            if cid < len(COLORS):
+                return COLORS[cid]
+            # Deterministic pseudo-random color based on cid (no global RNG state)
+            r = (37 * cid + 90) % 220 + 30
+            g = (57 * cid + 140) % 220 + 30
+            b = (93 * cid + 60) % 220 + 30
+            return (r, g, b)
+
         # Decision regions
         if self.show_voronoi:
             vs = voronoi.get_voronoi_surface(
@@ -651,8 +708,15 @@ class GameScene:
         # Trails + points
         for p in points:
             col = (170, 170, 180)
-            if p.cluster is not None and p.cluster < len(centroids):
+            if centroids and p.cluster is not None and 0 <= p.cluster < len(centroids):
                 col = centroids[p.cluster].color
+            elif (not centroids) and (p.cluster is not None):
+                # DBSCAN mode: cluster ids live on the points (no centroids)
+                try:
+                    cid = int(p.cluster)
+                except Exception:
+                    cid = -1
+                col = dbscan_color_for_cluster(cid)
 
             # Trails
             if len(p.trail) > 1:
@@ -828,6 +892,8 @@ class GameScene:
             self.app.screen.blit(ks, (int(x) - 10, int(y) + 6))
 
     def draw_stats_panel(self):
+        if self.algorithm == "dbscan":
+            return
         panel_width = 300
         panel_x = 10
         panel_y = HEIGHT - UI_PANEL_HEIGHT - 340
@@ -895,6 +961,8 @@ class GameScene:
             (f"FPS: {int(self.app.fps)}", TEXT_COLOR),
             (f"Algo A: {self.algorithm}", TEXT_COLOR),
             (f"K: {self.k}", TEXT_COLOR),
+            (f"DBSCAN eps: {self.dbscan_eps}", TEXT_COLOR),
+            (f"DBSCAN min: {self.dbscan_min_samples}", TEXT_COLOR),
             (f"Auto: {'On' if self.auto_iterate else 'Off'}", TEXT_COLOR),
             (f"Converged: {'Yes' if self.converged else 'No'}", TEXT_COLOR),
         ]
@@ -944,6 +1012,16 @@ class GameScene:
             a_state = "CONVERGED ✓" if a_done else "RUNNING"
             b_state = "CONVERGED ✓" if b_done else "RUNNING"
 
+            a_extra = None
+            if self.algorithm == "dbscan":
+                noise_a = sum(1 for p in self.points if p.cluster == -1)
+                a_extra = f"eps={self.dbscan_eps}  min={self.dbscan_min_samples}  clusters={self._dbscan_clusters_a}  noise={noise_a}"
+
+            b_extra = None
+            if self.algorithm_b == "dbscan":
+                noise_b = sum(1 for p in self.points_b if p.cluster == -1)
+                b_extra = f"eps={self.dbscan_eps}  min={self.dbscan_min_samples}  clusters={self._dbscan_clusters_b}  noise={noise_b}"
+
             self._draw_model_view(
                 self.points,
                 self.centroids,
@@ -955,6 +1033,7 @@ class GameScene:
                 status_lines=[
                     (f"{mode_tag} | {a_state}", a_color),
                     (f"Iter: {self.iteration_count}", TEXT_COLOR),
+                    (a_extra, TEXT_COLOR),
                 ],
             )
             self._draw_model_view(
@@ -968,6 +1047,7 @@ class GameScene:
                 status_lines=[
                     (f"{mode_tag} | {b_state}", b_color),
                     (f"Iter: {self.iteration_count_b}", TEXT_COLOR),
+                    (b_extra, TEXT_COLOR),
                 ],
             )
             pygame.draw.line(screen, (80, 80, 110), (half, 0), (half, play_h), 2)
@@ -976,6 +1056,10 @@ class GameScene:
             mode_tag = "AUTO" if self.auto_iterate else "MANUAL"
             state_color = COLORS[1] if done else COLORS[0]
             state = "CONVERGED ✓" if done else "RUNNING"
+            extra = None
+            if self.algorithm == "dbscan":
+                noise = sum(1 for p in self.points if p.cluster == -1)
+                extra = f"eps={self.dbscan_eps}  min={self.dbscan_min_samples}  clusters={self._dbscan_clusters_a}  noise={noise}"
             self._draw_model_view(
                 self.points,
                 self.centroids,
@@ -987,6 +1071,7 @@ class GameScene:
                 status_lines=[
                     (f"{mode_tag} | {state}", state_color),
                     (f"Iter: {self.iteration_count}", TEXT_COLOR),
+                    (extra, TEXT_COLOR),
                 ],
             )
 
@@ -1009,9 +1094,19 @@ class GameScene:
         status_color = COLORS[1] if fully_converged else COLORS[0]
         status_text = "CONVERGED ✓" if fully_converged else ("AUTO" if self.auto_iterate else "PAUSED")
 
-        algo_a = "K-Means" if self.algorithm == "kmeans" else "K-Medoids"
+        if self.algorithm == "kmeans":
+            algo_a = "K-Means"
+        elif self.algorithm == "kmedoids":
+            algo_a = "K-Medoids"
+        else:
+            algo_a = "DBSCAN"
         if self.battle_mode:
-            algo_b = "K-Means" if self.algorithm_b == "kmeans" else "K-Medoids"
+            if self.algorithm_b == "kmeans":
+                algo_b = "K-Means"
+            elif self.algorithm_b == "kmedoids":
+                algo_b = "K-Medoids"
+            else:
+                algo_b = "DBSCAN"
             mode_text = f"BATTLE  |  A: {algo_a} vs B: {algo_b}"
         else:
             mode_text = f"SINGLE  |  Algo: {algo_a}"
@@ -1048,7 +1143,7 @@ class GameScene:
         controls_left = [
             "SPACE Step | A Auto | R Reset | D Debug | C Clear | M Menu",
             "S Stats | G Graph | E Elbow | V Voronoi | B Battle | I Import | O Export",
-            "1-4 Datasets | 5/6 Algorithm | LeftClick Add | RightClick Move centroid",
+            "1-4 Datasets | 5 K-Means | 6 K-Medoids | 7 DBSCAN | LeftClick Add | RightClick Move centroid",
         ]
 
         left_lines = []
