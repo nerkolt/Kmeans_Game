@@ -128,6 +128,9 @@ python Kmeans_Game_Debug.py
 | `K` | Open dialog to set number of clusters (1-10) |
 | `↑` / `↓` | Quickly increase/decrease K |
 | `D` | Toggle debug panel (top-right) |
+| `T` | Toggle **Learning mode** overlay (tutorial/explanations) |
+| `TAB` | Next tutorial page (when Learning mode is on) |
+| `SHIFT` + `TAB` | Previous tutorial page |
 | `C` | Clear all points |
 | `5` | Select **K-Means** |
 | `6` | Select **K-Medoids** |

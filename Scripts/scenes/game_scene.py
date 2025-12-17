@@ -50,6 +50,12 @@ class GameScene:
 
         self.csv_points = list(settings.get("csv_points", []))
 
+        # Tutorial / learning mode
+        self.tutorial_mode = bool(settings.get("tutorial", False))
+        self.tutorial_page = 0
+        self._tutorial_flash = ""
+        self._tutorial_flash_until = 0
+
         # DBSCAN params (pixels)
         self.dbscan_eps = int(settings.get("dbscan_eps", 45))
         self.dbscan_min_samples = int(settings.get("dbscan_min_samples", 5))
@@ -293,6 +299,137 @@ class GameScene:
         self._invalidate_voronoi_cache()
 
     # -----------------------
+    # Tutorial / learning mode
+    # -----------------------
+    def _set_tutorial_flash(self, msg, seconds=2.0):
+        self._tutorial_flash = msg
+        self._tutorial_flash_until = pygame.time.get_ticks() + int(seconds * 1000)
+
+    def _wrap_text(self, font, text, max_w):
+        words = str(text).split(" ")
+        lines = []
+        cur = ""
+        for w in words:
+            test = (cur + " " + w).strip()
+            if font.size(test)[0] <= max_w:
+                cur = test
+            else:
+                if cur:
+                    lines.append(cur)
+                cur = w
+        if cur:
+            lines.append(cur)
+        return lines
+
+    def _algo_pretty(self, key):
+        if key == "kmeans":
+            return "K-Means"
+        if key == "kmedoids":
+            return "K-Medoids"
+        if key == "dbscan":
+            return "DBSCAN"
+        return str(key)
+
+    def _draw_tutorial_overlay(self):
+        if not self.tutorial_mode:
+            return
+
+        screen = self.app.screen
+        pad = 14
+        w = 430
+        x = 10
+        y = 10
+
+        title = "LEARNING MODE"
+        hint = "T: toggle  |  TAB: next page  |  SHIFT+TAB: prev page"
+
+        page = self.tutorial_page % 3
+        if page == 0:
+            lines = [
+                ("What you see", COLORS[2]),
+                ("- Points are your data samples.", TEXT_COLOR),
+                ("- Colors show cluster assignment.", TEXT_COLOR),
+                ("- Lines show point → centroid/medoid assignment.", TEXT_COLOR),
+                ("- SPACE runs 1 step, A runs auto until convergence.", TEXT_COLOR),
+                ("", TEXT_COLOR),
+                ("Try this:", COLORS[3]),
+                ("1) Press 1 (Blobs), set K≈#blobs, then press A.", TEXT_COLOR),
+                ("2) Press 2 (Moons) and compare K-Means vs DBSCAN.", TEXT_COLOR),
+            ]
+        elif page == 1:
+            lines = [
+                ("K-Means / K-Medoids", COLORS[2]),
+                ("Each iteration has 2 phases:", TEXT_COLOR),
+                ("1) Assign: each point chooses its nearest center.", TEXT_COLOR),
+                ("2) Update: centers move (mean for K-Means, medoid for K-Medoids).", TEXT_COLOR),
+                ("Convergence happens when assignments stop changing.", TEXT_COLOR),
+                ("", TEXT_COLOR),
+                ("Tip:", COLORS[3]),
+                ("- K-Means prefers round/spherical clusters.", TEXT_COLOR),
+                ("- K-Medoids is more robust to outliers.", TEXT_COLOR),
+            ]
+        else:
+            lines = [
+                ("DBSCAN (density-based)", COLORS[2]),
+                ("DBSCAN does NOT use K.", TEXT_COLOR),
+                ("It groups points by density using:", TEXT_COLOR),
+                (f"- eps: radius = {self.dbscan_eps}px", TEXT_COLOR),
+                (f"- min_samples: {self.dbscan_min_samples}", TEXT_COLOR),
+                ("Points labeled -1 are noise/outliers.", TEXT_COLOR),
+                ("", TEXT_COLOR),
+                ("Tip:", COLORS[3]),
+                ("- Moons/Circles often look better with DBSCAN than K-Means.", TEXT_COLOR),
+            ]
+
+        # Build dynamic height
+        font = self.app.tiny_font
+        max_text_w = w - pad * 2
+        wrapped = []
+        for txt, col in lines:
+            if not txt:
+                wrapped.append(("", col))
+                continue
+            for line in self._wrap_text(font, txt, max_text_w):
+                wrapped.append((line, col))
+
+        flash = None
+        if self._tutorial_flash and pygame.time.get_ticks() < self._tutorial_flash_until:
+            flash = self._tutorial_flash
+
+        h = pad * 2 + (len(wrapped) + 4) * (font.get_height() + 4)
+        if flash:
+            h += (font.get_height() + 10)
+        h = min(h, 420)
+
+        s = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.rect(s, (0, 0, 0, 160), (0, 0, w, h), border_radius=12)
+        pygame.draw.rect(s, (80, 80, 110, 200), (0, 0, w, h), 2, border_radius=12)
+        screen.blit(s, (x, y))
+
+        ty = y + pad
+        screen.blit(self.app.small_font.render(title, True, COLORS[1]), (x + pad, ty))
+        ty += self.app.small_font.get_height() + 4
+        screen.blit(font.render(hint, True, COLORS[4]), (x + pad, ty))
+        ty += font.get_height() + 10
+
+        # Current context line
+        algo = self._algo_pretty(self.algorithm)
+        ctx = f"Algo: {algo}  |  Mode: {'BATTLE' if self.battle_mode else 'SINGLE'}  |  Dataset: {self.dataset_type.upper()}"
+        screen.blit(font.render(ctx, True, TEXT_COLOR), (x + pad, ty))
+        ty += font.get_height() + 10
+
+        for txt, col in wrapped:
+            if ty > y + h - pad - (font.get_height() + 4):
+                break
+            if txt:
+                screen.blit(font.render(txt, True, col), (x + pad, ty))
+            ty += font.get_height() + 4
+
+        if flash and ty <= y + h - pad - (font.get_height() + 4):
+            ty += 6
+            screen.blit(font.render(flash, True, COLORS[0]), (x + pad, ty))
+
+    # -----------------------
     # Data mining helpers
     # -----------------------
     def calculate_inertia(self):
@@ -466,10 +603,23 @@ class GameScene:
                 return
 
             # Controls
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_t:
+                self.tutorial_mode = not self.tutorial_mode
+                self._set_tutorial_flash("Learning mode ON" if self.tutorial_mode else "Learning mode OFF", seconds=1.4)
+            elif event.key == pygame.K_TAB:
+                mods = pygame.key.get_mods()
+                if mods & pygame.KMOD_SHIFT:
+                    self.tutorial_page = (self.tutorial_page - 1) % 3
+                else:
+                    self.tutorial_page = (self.tutorial_page + 1) % 3
+            elif event.key == pygame.K_SPACE:
                 self.step_algorithm()
+                if self.tutorial_mode and (self.algorithm in ("kmeans", "kmedoids")):
+                    self._set_tutorial_flash("Step = Assign → Update (one full iteration).", seconds=2.0)
             elif event.key == pygame.K_a:
                 self.auto_iterate = not self.auto_iterate
+                if self.tutorial_mode and self.auto_iterate:
+                    self._set_tutorial_flash("Tip: try SPACE step-by-step first, then A for auto.", seconds=2.5)
             elif event.key == pygame.K_r:
                 self.reset_algorithm()
             elif event.key == pygame.K_d:
@@ -1083,6 +1233,7 @@ class GameScene:
         if self.show_stats:
             self.draw_stats_panel()
         self._draw_debug_panel()
+        self._draw_tutorial_overlay()
 
         # Bottom UI bar
         ui_rect = pygame.Rect(0, HEIGHT - UI_PANEL_HEIGHT, WIDTH, UI_PANEL_HEIGHT)

@@ -28,6 +28,7 @@ class MenuScene:
         self.menu_k = int(initial.get("k", 3))
         self.menu_start_mode = initial.get("start_mode", "single")  # single/battle
         self.menu_voronoi = bool(initial.get("voronoi", False))
+        self.menu_tutorial = bool(initial.get("tutorial", False))
         self.menu_dbscan_eps = int(initial.get("dbscan_eps", 45))
         self.menu_dbscan_min_samples = int(initial.get("dbscan_min_samples", 5))
 
@@ -88,6 +89,7 @@ class MenuScene:
                 "choices": [("single", "Single"), ("battle", "Battle (A/B)")],
             },
             {"key": "voronoi", "type": "bool", "label": "Voronoi regions", "value": self.menu_voronoi},
+            {"key": "tutorial", "type": "bool", "label": "Learning mode (Tutorial)", "value": self.menu_tutorial},
             {"key": "import", "type": "action", "label": "Import CSV", "value": None},
             {"key": "export", "type": "action", "label": "Export CSV", "value": None},
             {"key": "start", "type": "action", "label": "Start", "value": None},
@@ -107,6 +109,8 @@ class MenuScene:
             self.menu_start_mode = value
         elif key == "voronoi":
             self.menu_voronoi = bool(value)
+        elif key == "tutorial":
+            self.menu_tutorial = bool(value)
         elif key == "dbscan_eps":
             self.menu_dbscan_eps = int(value)
         elif key == "dbscan_min_samples":
@@ -177,6 +181,7 @@ class MenuScene:
             "csv_points": list(self.csv_points),
             "dbscan_eps": self.menu_dbscan_eps,
             "dbscan_min_samples": self.menu_dbscan_min_samples,
+            "tutorial": self.menu_tutorial,
         }
         self.app.set_scene(GameScene(self.app, settings))
 
@@ -229,6 +234,9 @@ class MenuScene:
             return
         if event.key == pygame.K_v:
             self._apply_item_value("voronoi", not self.menu_voronoi)
+            return
+        if event.key == pygame.K_t:
+            self._apply_item_value("tutorial", not self.menu_tutorial)
             return
         if event.key == pygame.K_1:
             self._apply_item_value("dataset", "blobs")
@@ -314,13 +322,22 @@ class MenuScene:
         s_title = self.app.menu_section_font.render("Settings", True, TEXT_COLOR)
         screen.blit(s_title, (left.x + 16, left.y + 12))
 
-        row_y = left.y + 52
-        row_h = 38
+        # Auto-fit rows so the menu always fits all items (no clipping)
+        row_start_y = left.y + 52
+        gap = 6
+        # Leave some padding at the bottom of the panel
+        row_area_h = max(1, left.bottom - row_start_y - 12)
+        # Row height chosen to fit all items; clamp for readability
+        row_h = int((row_area_h + gap) / max(1, len(items)) - gap)
+        row_h = max(28, min(38, row_h))
+        row_y = row_start_y
+
+        row_font = self.app.menu_item_font if row_h >= 34 else self.app.tiny_font
         self._menu_layout_cache = {"rows": []}
 
         for idx, it in enumerate(items):
             selected = idx == self.menu_index
-            row_rect = pygame.Rect(left.x + 10, row_y - 4, left.w - 20, row_h)
+            row_rect = pygame.Rect(left.x + 10, row_y, left.w - 20, row_h)
             self._menu_layout_cache["rows"].append((row_rect, it["key"]))
 
             if selected:
@@ -341,12 +358,14 @@ class MenuScene:
             elif it["type"] == "action":
                 value_text = "ENTER"
 
-            label_s = self.app.menu_item_font.render(label, True, TEXT_COLOR if not selected else (255, 255, 255))
-            value_s = self.app.menu_item_font.render(value_text, True, COLORS[1] if selected else TEXT_COLOR)
-            screen.blit(label_s, (row_rect.x + 12, row_rect.y + 8))
-            screen.blit(value_s, (row_rect.right - value_s.get_width() - 12, row_rect.y + 8))
+            label_s = row_font.render(label, True, TEXT_COLOR if not selected else (255, 255, 255))
+            value_s = row_font.render(value_text, True, COLORS[1] if selected else TEXT_COLOR)
 
-            row_y += row_h + 6
+            text_y = row_rect.y + max(0, (row_rect.h - label_s.get_height()) // 2)
+            screen.blit(label_s, (row_rect.x + 12, text_y))
+            screen.blit(value_s, (row_rect.right - value_s.get_width() - 12, text_y))
+
+            row_y += row_h + gap
 
         p_title = self.app.menu_section_font.render("Preview", True, TEXT_COLOR)
         screen.blit(p_title, (right.x + 16, right.y + 12))
@@ -375,10 +394,32 @@ class MenuScene:
         # Bottom help
         help_lines = [
             "UP/DOWN select | LEFT/RIGHT change | ENTER activate | ESC quit",
-            "Shortcuts: 1-4 dataset | 5/6 algorithm | B battle | V voronoi | I import | O export",
+            "Shortcuts: 1-4 dataset | 5/6/7 algorithm | B battle | V voronoi | T learning | I import | O export",
         ]
+
+        def wrap(font, text, max_w):
+            words = text.split(" ")
+            out = []
+            cur = ""
+            for w in words:
+                test = (cur + " " + w).strip()
+                if font.size(test)[0] <= max_w:
+                    cur = test
+                else:
+                    if cur:
+                        out.append(cur)
+                    cur = w
+            if cur:
+                out.append(cur)
+            return out
+
+        max_help_w = WIDTH - 44
+        help_wrapped = []
+        for t in help_lines:
+            help_wrapped += wrap(self.app.menu_hint_font, t, max_help_w)
+
         by = HEIGHT - 92
-        for i, t in enumerate(help_lines):
+        for i, t in enumerate(help_wrapped[:4]):
             surf = self.app.menu_hint_font.render(t, True, (180, 180, 195))
             screen.blit(surf, (22, by + i * 22))
 

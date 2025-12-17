@@ -38,6 +38,9 @@ When the app starts you’ll see a **Main Menu** where you can pick:
 | `P` | Set number of points (dialog) |
 | `K` | Set number of clusters **K** (dialog) |
 | `D` | Toggle debug overlay (top-right) |
+| `T` | Toggle **Learning mode** overlay (tutorial/explanations) |
+| `TAB` | Next tutorial page (when Learning mode is on) |
+| `SHIFT` + `TAB` | Previous tutorial page |
 | `M` | Back to **Main Menu** |
 
 ### Data mining / analysis
