@@ -1,5 +1,6 @@
 import math
 import random
+import webbrowser
 
 import pygame
 
@@ -29,6 +30,7 @@ class StartScene:
         self._buttons = []
         self._resolution_idx = 0
         self._palette_idx = 0
+        self._credit_link_rects = []  # list[(pygame.Rect, url)]
 
         # Presets for options
         self._resolutions = [
@@ -195,6 +197,14 @@ class StartScene:
                     return
 
             else:  # credits
+                # If clicking the GitHub link, open it; otherwise go back.
+                for rect, url in list(self._credit_link_rects):
+                    if rect.collidepoint(mx, my):
+                        try:
+                            webbrowser.open(url)
+                        except Exception:
+                            pass
+                        return
                 self.page = "main"
 
     def _go_start(self):
@@ -417,6 +427,7 @@ class StartScene:
         font = self.app.menu_item_font
         hint = self.app.menu_hint_font
 
+        self._credit_link_rects = []
         lines = [
             ("Created by", "Nour Ltaief"),
             ("Class", "3DNI1"),
@@ -429,6 +440,7 @@ class StartScene:
         max_w = panel.w - 60
         y = panel.y + int(panel.h * 0.30)
         bottom_limit = panel.bottom - 54
+        mx, my = pygame.mouse.get_pos()
 
         for k, v in lines:
             if y > bottom_limit:
@@ -441,11 +453,25 @@ class StartScene:
             screen.blit(key_s, (left_x, y))
             y += key_s.get_height() + 4
 
+            is_link = (k.lower() == "github")
             for line in self._wrap_text(val_font, v, max_w):
                 if y > bottom_limit:
                     break
-                val_s = val_font.render(line, True, config.TEXT_COLOR)
-                screen.blit(val_s, (left_x, y))
+                if is_link:
+                    # Hover styling for link
+                    link_hover = pygame.Rect(left_x, y, val_font.size(line)[0], val_font.get_height()).collidepoint(mx, my)
+                    col = config.COLORS[1 % len(config.COLORS)] if link_hover else (170, 200, 255)
+                    val_s = val_font.render(line, True, col)
+                    screen.blit(val_s, (left_x, y))
+
+                    rect = pygame.Rect(left_x, y, val_s.get_width(), val_s.get_height())
+                    # underline
+                    uy = y + val_s.get_height() - 2
+                    pygame.draw.line(screen, col, (rect.x, uy), (rect.x + rect.w, uy), 1)
+                    self._credit_link_rects.append((rect, v))
+                else:
+                    val_s = val_font.render(line, True, config.TEXT_COLOR)
+                    screen.blit(val_s, (left_x, y))
                 y += val_s.get_height() + 2
             y += 10
 
