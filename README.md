@@ -37,11 +37,11 @@ Perfect for:
 - **Scale-pop effects** when points switch clusters
 
 ### Visual Effects
-- ✨ **Glowing, pulsing halos** around centroids
-- 💥 **Particle explosions** when points change clusters
-- 🌠 **Trailing effects** behind moving points
-- 🔗 **Faint connection lines** from points to centroids
-- 🎯 **Smooth color transitions** for better visual feedback
+- **Glowing, pulsing halos** around centroids
+- **Particle explosions** when points change clusters
+- **Trailing effects** behind moving points
+- **Faint connection lines** from points to centroids
+- **Smooth color transitions** for better visual feedback
 
 ### Modern Design
 - Rich color palette (Coral, Turquoise, Pink, Peach, Lavender)
