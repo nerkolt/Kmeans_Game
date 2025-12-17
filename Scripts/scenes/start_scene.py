@@ -433,7 +433,7 @@ class StartScene:
             ("Class", "3DNI1"),
             ("Teacher", "Yassine Net"),
             ("Thanks", "For playing and exploring data mining!"),
-            ("GitHub", "https://github.com/nerkolt/Kmeans_Game"),
+            ("GitHub", "https://github.com/nerkolt/Clustering_Visualizer_Game"),
         ]
 
         left_x = panel.x + 30

@@ -81,8 +81,8 @@ Perfect for:
 
 ```bash
 # Using Git
-git clone https://github.com/nerkolt/Kmeans_Game.git
-cd Kmeans_Game
+git clone https://github.com/nerkolt/Clustering_Visualizer_Game.git
+cd Clustering_Visualizer_Game
 
 # Or download and extract the ZIP file
 ```
