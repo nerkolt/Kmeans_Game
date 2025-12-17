@@ -175,7 +175,7 @@ The workflow will attach these files to the GitHub Release:
 - `dist-installer/ClusteringVisualizerGame-Setup-<version>.exe`
 - `dist/ClusteringVisualizerGame/ClusteringVisualizerGame.exe`
 
-![Workflow Video : ](Assets/Videos/Workflow.mp4)
+![Workflow Video ](https://youtu.be/ufjzCj4FKxQ)
 
 <a id="controls"></a>
 ## Controls & Usage
