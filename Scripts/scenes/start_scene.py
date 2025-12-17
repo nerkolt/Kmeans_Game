@@ -72,8 +72,9 @@ class StartScene:
 
     def _layout(self):
         w, h = self.app.screen.get_size()
-        panel_w = min(520, int(w * 0.62))
-        panel_h = min(420, int(h * 0.62))
+        # Slightly larger so long strings have room on small resolutions.
+        panel_w = min(560, int(w * 0.70))
+        panel_h = min(460, int(h * 0.70))
         panel = pygame.Rect((w - panel_w) // 2, (h - panel_h) // 2, panel_w, panel_h)
 
         btn_w = int(panel_w * 0.72)
@@ -88,6 +89,33 @@ class StartScene:
             _Button("Credits", pygame.Rect(bx, by + 2 * (btn_h + gap), btn_w, btn_h)),
         ]
         return panel
+
+    def _wrap_text(self, font: pygame.font.Font, text: str, max_w: int):
+        words = str(text).split(" ")
+        out = []
+        cur = ""
+        for w in words:
+            test = (cur + " " + w).strip()
+            if font.size(test)[0] <= max_w:
+                cur = test
+            else:
+                if cur:
+                    out.append(cur)
+                cur = w
+        if cur:
+            out.append(cur)
+        return out
+
+    def _fit_font(self, text: str, max_w: int, start_size: int = 54, min_size: int = 18):
+        """Create a Font(None, size) that fits `text` within `max_w`."""
+        t = str(text)
+        size = int(start_size)
+        while size > int(min_size):
+            f = pygame.font.Font(None, size)
+            if f.size(t)[0] <= max_w:
+                return f
+            size -= 2
+        return pygame.font.Font(None, int(min_size))
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -227,7 +255,7 @@ class StartScene:
             r = int(sp["r"])
             pygame.draw.circle(screen, (235, 235, 245, a), (x, y), max(1, r))
 
-    def _draw_panel(self, screen, title: str, subtitle: str = ""):
+    def _draw_panel(self, screen, title: str, subtitle: str = "", bounce_title: bool = False):
         panel = self._layout()
         # Panel
         card = pygame.Surface((panel.w, panel.h), pygame.SRCALPHA)
@@ -235,17 +263,37 @@ class StartScene:
         pygame.draw.rect(card, (255, 255, 255, 32), card.get_rect(), width=2, border_radius=18)
         screen.blit(card, (panel.x, panel.y))
 
-        title_font = self.app.menu_title_font
-        small = self.app.menu_hint_font
-
+        max_title_w = panel.w - 60
         ty = panel.y + 26
+        # Title: auto-fit + bounce (optional)
+        title_font = self._fit_font(title, int(max_title_w / 1.06) if bounce_title else max_title_w, start_size=54, min_size=26)
         title_s = title_font.render(title, True, config.TEXT_COLOR)
-        screen.blit(title_s, (panel.centerx - title_s.get_width() // 2, ty))
-        ty += title_s.get_height() + 10
+
+        if bounce_title:
+            y_off = int(math.sin(self._t * 2.6) * 5 + math.sin(self._t * 5.1) * 2)
+            scale = 1.0 + (math.sin(self._t * 2.6 + 0.4) * 0.03)
+            sw = max(1, int(title_s.get_width() * scale))
+            sh = max(1, int(title_s.get_height() * scale))
+            title_s2 = pygame.transform.smoothscale(title_s, (sw, sh))
+            shadow = pygame.transform.smoothscale(title_font.render(title, True, (0, 0, 0)), (sw, sh))
+            sx = panel.centerx - sw // 2
+            sy = ty + y_off
+            screen.blit(shadow, (sx + 2, sy + 3))
+            screen.blit(title_s2, (sx, sy))
+            ty = sy + sh + 8
+        else:
+            screen.blit(title_s, (panel.centerx - title_s.get_width() // 2, ty))
+            ty += title_s.get_height() + 10
 
         if subtitle:
-            sub_s = small.render(subtitle, True, (200, 200, 210))
-            screen.blit(sub_s, (panel.centerx - sub_s.get_width() // 2, ty))
+            max_sub_w = panel.w - 70
+            sub_font = self.app.menu_hint_font
+            if sub_font.size(subtitle)[0] > max_sub_w:
+                sub_font = pygame.font.Font(None, 20)
+            for line in self._wrap_text(sub_font, subtitle, max_sub_w)[:2]:
+                sub_s = sub_font.render(line, True, (200, 200, 210))
+                screen.blit(sub_s, (panel.centerx - sub_s.get_width() // 2, ty))
+                ty += sub_s.get_height() + 2
 
         return panel
 
@@ -268,7 +316,7 @@ class StartScene:
         screen.blit(label, (base.centerx - label.get_width() // 2, base.centery - label.get_height() // 2))
 
     def _draw_main(self, screen):
-        panel = self._draw_panel(screen, "Kmeans Game", "A mini data-mining visualizer")
+        panel = self._draw_panel(screen, "Kmeans Game", "A mini data-mining visualizer", bounce_title=True)
 
         # Cute little orbiting dots logo (no external assets needed)
         cx = panel.centerx
@@ -284,8 +332,19 @@ class StartScene:
         for b in self._buttons:
             self._draw_button(screen, b)
 
-        hint = self.app.menu_hint_font.render("[ENTER] Start  |  [O] Options  |  [C] Credits  |  [ESC] Quit", True, (200, 200, 210))
-        screen.blit(hint, (panel.centerx - hint.get_width() // 2, panel.bottom - 32))
+        # Wrap hint so it never goes outside the panel on smaller widths.
+        hint_text = "[ENTER] Start  |  [O] Options  |  [C] Credits  |  [ESC] Quit"
+        max_w = panel.w - 40
+        hint_font = self.app.menu_hint_font
+        if hint_font.size(hint_text)[0] > max_w:
+            hint_font = pygame.font.Font(None, 20)
+        lines = self._wrap_text(hint_font, hint_text, max_w)[:2]
+        y = panel.bottom - 12
+        for line in reversed(lines):
+            surf = hint_font.render(line, True, (200, 200, 210))
+            y -= surf.get_height()
+            screen.blit(surf, (panel.centerx - surf.get_width() // 2, y))
+            y -= 2
 
     def _draw_options(self, screen):
         panel = self._draw_panel(screen, "Options", "Click a row to change • [ESC] Back")
@@ -306,8 +365,14 @@ class StartScene:
         pal_text = f"Colors: {pal_label}  (click to toggle)"
         self._draw_option_row(screen, pygame.Rect(left, top + 62, row_w, 48), pal_text, config.COLORS[2])
 
-        note = hint.render("Tip: press [ENTER] to apply size, or click Apply.", True, (200, 200, 210))
-        screen.blit(note, (left, top + 130))
+        # Wrap note (can be too long on small widths)
+        note_text = "Tip: press [ENTER] to apply size, or click Apply."
+        note_font = hint if hint.size(note_text)[0] <= row_w else pygame.font.Font(None, 20)
+        ny = top + 130
+        for line in self._wrap_text(note_font, note_text, row_w)[:2]:
+            note = note_font.render(line, True, (200, 200, 210))
+            screen.blit(note, (left, ny))
+            ny += note.get_height() + 2
 
         # Apply button
         apply_btn = pygame.Rect(panel.centerx - 110, panel.bottom - 74, 220, 46)
@@ -317,7 +382,8 @@ class StartScene:
         pygame.draw.rect(s, (*config.UI_BG, 235), s.get_rect(), border_radius=14)
         pygame.draw.rect(s, (255, 255, 255, 55 if hover else 28), s.get_rect(), width=2, border_radius=14)
         screen.blit(s, (apply_btn.x, apply_btn.y))
-        txt = font.render("Apply Window Size", True, config.TEXT_COLOR)
+        txt_font = self._fit_font("Apply Window Size", apply_btn.w - 20, start_size=26, min_size=18)
+        txt = txt_font.render("Apply Window Size", True, config.TEXT_COLOR)
         screen.blit(txt, (apply_btn.centerx - txt.get_width() // 2, apply_btn.centery - txt.get_height() // 2))
 
     def _draw_option_row(self, screen, rect: pygame.Rect, text: str, accent):
@@ -328,8 +394,23 @@ class StartScene:
         pygame.draw.rect(s, (255, 255, 255, 42 if hover else 24), s.get_rect(), width=2, border_radius=12)
         screen.blit(s, (rect.x, rect.y))
         pygame.draw.circle(screen, accent, (rect.x + 18, rect.centery), 6)
-        label = self.app.menu_item_font.render(text, True, config.TEXT_COLOR)
-        screen.blit(label, (rect.x + 34, rect.centery - label.get_height() // 2))
+        # Fit/wrap option row text inside the row rect.
+        max_w = rect.w - 44
+        base_font = self.app.menu_item_font
+        if base_font.size(text)[0] > max_w:
+            base_font = pygame.font.Font(None, 22)
+        lines = self._wrap_text(base_font, text, max_w)
+        if len(lines) <= 1:
+            label = base_font.render(text, True, config.TEXT_COLOR)
+            screen.blit(label, (rect.x + 34, rect.centery - label.get_height() // 2))
+        else:
+            lines = lines[:2]
+            total_h = len(lines) * base_font.get_height() + (len(lines) - 1) * 2
+            y = rect.centery - total_h // 2
+            for line in lines:
+                label = base_font.render(line, True, config.TEXT_COLOR)
+                screen.blit(label, (rect.x + 34, y))
+                y += base_font.get_height() + 2
 
     def _draw_credits(self, screen):
         panel = self._draw_panel(screen, "Credits", "Click anywhere to go back • [ESC] Back")
@@ -344,15 +425,39 @@ class StartScene:
             ("GitHub", "https://github.com/nerkolt/Kmeans_Game"),
         ]
 
+        left_x = panel.x + 30
+        max_w = panel.w - 60
         y = panel.y + int(panel.h * 0.30)
-        for k, v in lines:
-            key_s = hint.render(k.upper(), True, (190, 190, 205))
-            val_s = font.render(v, True, config.TEXT_COLOR)
-            screen.blit(key_s, (panel.x + 30, y))
-            screen.blit(val_s, (panel.x + 30, y + key_s.get_height() + 4))
-            y += key_s.get_height() + val_s.get_height() + 18
+        bottom_limit = panel.bottom - 54
 
-        foot = hint.render("Tip: You can change settings in Options before entering the main menu.", True, (200, 200, 210))
-        screen.blit(foot, (panel.centerx - foot.get_width() // 2, panel.bottom - 34))
+        for k, v in lines:
+            if y > bottom_limit:
+                break
+
+            key_font = hint if hint.size(k.upper())[0] <= max_w else pygame.font.Font(None, 20)
+            val_font = font if font.size(v)[0] <= max_w else pygame.font.Font(None, 22)
+
+            key_s = key_font.render(k.upper(), True, (190, 190, 205))
+            screen.blit(key_s, (left_x, y))
+            y += key_s.get_height() + 4
+
+            for line in self._wrap_text(val_font, v, max_w):
+                if y > bottom_limit:
+                    break
+                val_s = val_font.render(line, True, config.TEXT_COLOR)
+                screen.blit(val_s, (left_x, y))
+                y += val_s.get_height() + 2
+            y += 10
+
+        # Wrap footer
+        foot_text = "Tip: You can change settings in Options before entering the main menu."
+        foot_font = hint if hint.size(foot_text)[0] <= (panel.w - 40) else pygame.font.Font(None, 20)
+        foot_lines = self._wrap_text(foot_font, foot_text, panel.w - 40)[:2]
+        fy = panel.bottom - 12
+        for line in reversed(foot_lines):
+            foot = foot_font.render(line, True, (200, 200, 210))
+            fy -= foot.get_height()
+            screen.blit(foot, (panel.centerx - foot.get_width() // 2, fy))
+            fy -= 2
 
 
