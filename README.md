@@ -364,7 +364,6 @@ Kmeans_Game/
 │   ├── scenes/
 │   │   ├── menu_scene.py             # Main menu UI
 │   │   └── game_scene.py             # Main game view + overlays
-│   └── Kmeans_Game_Debug_legacy.py   # Old monolithic version (reference only)
 │
 ├── Assets/                           # README screenshots + app logo
 │   ├── logo.png
