@@ -8,18 +8,7 @@ import algorithms
 import csv_io
 import datasets
 import voronoi
-from config import (
-    BG_COLOR,
-    COLORS,
-    FPS,
-    HEIGHT,
-    SIDE_MARGIN,
-    TEXT_COLOR,
-    TOP_MARGIN,
-    UI_BG,
-    UI_PANEL_HEIGHT,
-    WIDTH,
-)
+import config
 from entities import Centroid, ParticleEffect, Point
 
 
@@ -140,10 +129,10 @@ class GameScene:
         dx = (max_x - min_x) if max_x != min_x else 1.0
         dy = (max_y - min_y) if max_y != min_y else 1.0
 
-        play_left = SIDE_MARGIN
-        play_right = WIDTH - SIDE_MARGIN
-        play_top = TOP_MARGIN
-        play_bottom = HEIGHT - UI_PANEL_HEIGHT - 20
+        play_left = config.SIDE_MARGIN
+        play_right = config.WIDTH - config.SIDE_MARGIN
+        play_top = config.TOP_MARGIN
+        play_bottom = config.HEIGHT - config.UI_PANEL_HEIGHT - 20
         play_w = max(1, play_right - play_left)
         play_h = max(1, play_bottom - play_top)
 
@@ -173,9 +162,9 @@ class GameScene:
                 p = random.choice(self.points)
                 x, y = p.x, p.y
             else:
-                x = random.randint(SIDE_MARGIN, WIDTH - SIDE_MARGIN)
-                y = random.randint(TOP_MARGIN, HEIGHT - UI_PANEL_HEIGHT - 20)
-            into_list.append(Centroid(x, y, COLORS[i % len(COLORS)]))
+                x = random.randint(config.SIDE_MARGIN, config.WIDTH - config.SIDE_MARGIN)
+                y = random.randint(config.TOP_MARGIN, config.HEIGHT - config.UI_PANEL_HEIGHT - 20)
+            into_list.append(Centroid(x, y, config.COLORS[i % len(config.COLORS)]))
 
     def reset_algorithm(self):
         # Shared centroid starting positions (fair for battle mode) for centroid-based algorithms.
@@ -187,8 +176,8 @@ class GameScene:
             else:
                 coords.append(
                     (
-                        random.randint(SIDE_MARGIN, WIDTH - SIDE_MARGIN),
-                        random.randint(TOP_MARGIN, HEIGHT - UI_PANEL_HEIGHT - 20),
+                        random.randint(config.SIDE_MARGIN, config.WIDTH - config.SIDE_MARGIN),
+                        random.randint(config.TOP_MARGIN, config.HEIGHT - config.UI_PANEL_HEIGHT - 20),
                     )
                 )
 
@@ -346,39 +335,39 @@ class GameScene:
         page = self.tutorial_page % 3
         if page == 0:
             lines = [
-                ("What you see", COLORS[2]),
-                ("- Points are your data samples.", TEXT_COLOR),
-                ("- Colors show cluster assignment.", TEXT_COLOR),
-                ("- Lines show point → centroid/medoid assignment.", TEXT_COLOR),
-                ("- SPACE runs 1 step, A runs auto until convergence.", TEXT_COLOR),
-                ("", TEXT_COLOR),
-                ("Try this:", COLORS[3]),
-                ("1) Press 1 (Blobs), set K≈#blobs, then press A.", TEXT_COLOR),
-                ("2) Press 2 (Moons) and compare K-Means vs DBSCAN.", TEXT_COLOR),
+                ("What you see", config.COLORS[2 % len(config.COLORS)]),
+                ("- Points are your data samples.", config.TEXT_COLOR),
+                ("- Colors show cluster assignment.", config.TEXT_COLOR),
+                ("- Lines show point → centroid/medoid assignment.", config.TEXT_COLOR),
+                ("- SPACE runs 1 step, A runs auto until convergence.", config.TEXT_COLOR),
+                ("", config.TEXT_COLOR),
+                ("Try this:", config.COLORS[3 % len(config.COLORS)]),
+                ("1) Press 1 (Blobs), set K≈#blobs, then press A.", config.TEXT_COLOR),
+                ("2) Press 2 (Moons) and compare K-Means vs DBSCAN.", config.TEXT_COLOR),
             ]
         elif page == 1:
             lines = [
-                ("K-Means / K-Medoids", COLORS[2]),
-                ("Each iteration has 2 phases:", TEXT_COLOR),
-                ("1) Assign: each point chooses its nearest center.", TEXT_COLOR),
-                ("2) Update: centers move (mean for K-Means, medoid for K-Medoids).", TEXT_COLOR),
-                ("Convergence happens when assignments stop changing.", TEXT_COLOR),
-                ("", TEXT_COLOR),
-                ("Tip:", COLORS[3]),
-                ("- K-Means prefers round/spherical clusters.", TEXT_COLOR),
-                ("- K-Medoids is more robust to outliers.", TEXT_COLOR),
+                ("K-Means / K-Medoids", config.COLORS[2 % len(config.COLORS)]),
+                ("Each iteration has 2 phases:", config.TEXT_COLOR),
+                ("1) Assign: each point chooses its nearest center.", config.TEXT_COLOR),
+                ("2) Update: centers move (mean for K-Means, medoid for K-Medoids).", config.TEXT_COLOR),
+                ("Convergence happens when assignments stop changing.", config.TEXT_COLOR),
+                ("", config.TEXT_COLOR),
+                ("Tip:", config.COLORS[3 % len(config.COLORS)]),
+                ("- K-Means prefers round/spherical clusters.", config.TEXT_COLOR),
+                ("- K-Medoids is more robust to outliers.", config.TEXT_COLOR),
             ]
         else:
             lines = [
-                ("DBSCAN (density-based)", COLORS[2]),
-                ("DBSCAN does NOT use K.", TEXT_COLOR),
-                ("It groups points by density using:", TEXT_COLOR),
-                (f"- eps: radius = {self.dbscan_eps}px", TEXT_COLOR),
-                (f"- min_samples: {self.dbscan_min_samples}", TEXT_COLOR),
-                ("Points labeled -1 are noise/outliers.", TEXT_COLOR),
-                ("", TEXT_COLOR),
-                ("Tip:", COLORS[3]),
-                ("- Moons/Circles often look better with DBSCAN than K-Means.", TEXT_COLOR),
+                ("DBSCAN (density-based)", config.COLORS[2 % len(config.COLORS)]),
+                ("DBSCAN does NOT use K.", config.TEXT_COLOR),
+                ("It groups points by density using:", config.TEXT_COLOR),
+                (f"- eps: radius = {self.dbscan_eps}px", config.TEXT_COLOR),
+                (f"- min_samples: {self.dbscan_min_samples}", config.TEXT_COLOR),
+                ("Points labeled -1 are noise/outliers.", config.TEXT_COLOR),
+                ("", config.TEXT_COLOR),
+                ("Tip:", config.COLORS[3 % len(config.COLORS)]),
+                ("- Moons/Circles often look better with DBSCAN than K-Means.", config.TEXT_COLOR),
             ]
 
         # Build dynamic height
@@ -407,15 +396,15 @@ class GameScene:
         screen.blit(s, (x, y))
 
         ty = y + pad
-        screen.blit(self.app.small_font.render(title, True, COLORS[1]), (x + pad, ty))
+        screen.blit(self.app.small_font.render(title, True, config.COLORS[1 % len(config.COLORS)]), (x + pad, ty))
         ty += self.app.small_font.get_height() + 4
-        screen.blit(font.render(hint, True, COLORS[4]), (x + pad, ty))
+        screen.blit(font.render(hint, True, config.COLORS[4 % len(config.COLORS)]), (x + pad, ty))
         ty += font.get_height() + 10
 
         # Current context line
         algo = self._algo_pretty(self.algorithm)
         ctx = f"Algo: {algo}  |  Mode: {'BATTLE' if self.battle_mode else 'SINGLE'}  |  Dataset: {self.dataset_type.upper()}"
-        screen.blit(font.render(ctx, True, TEXT_COLOR), (x + pad, ty))
+        screen.blit(font.render(ctx, True, config.TEXT_COLOR), (x + pad, ty))
         ty += font.get_height() + 10
 
         for txt, col in wrapped:
@@ -427,7 +416,7 @@ class GameScene:
 
         if flash and ty <= y + h - pad - (font.get_height() + 4):
             ty += 6
-            screen.blit(font.render(flash, True, COLORS[0]), (x + pad, ty))
+            screen.blit(font.render(flash, True, config.COLORS[0]), (x + pad, ty))
 
     # -----------------------
     # Data mining helpers
@@ -451,9 +440,9 @@ class GameScene:
                 p = random.choice(pts)
                 x, y = p.x, p.y
             else:
-                x = random.randint(SIDE_MARGIN, WIDTH - SIDE_MARGIN)
-                y = random.randint(TOP_MARGIN, HEIGHT - UI_PANEL_HEIGHT - 20)
-            cents.append(Centroid(x, y, COLORS[i % len(COLORS)]))
+                x = random.randint(config.SIDE_MARGIN, config.WIDTH - config.SIDE_MARGIN)
+                y = random.randint(config.TOP_MARGIN, config.HEIGHT - config.UI_PANEL_HEIGHT - 20)
+            cents.append(Centroid(x, y, config.COLORS[i % len(config.COLORS)]))
         return cents
 
     def run_elbow_method(self):
@@ -712,15 +701,16 @@ class GameScene:
 
         elif event.type == pygame.MOUSEBUTTONDOWN and not self.input_active:
             mx, my = pygame.mouse.get_pos()
-            if my >= HEIGHT - UI_PANEL_HEIGHT:
+            w, h = self.app.screen.get_size()
+            if my >= h - config.UI_PANEL_HEIGHT:
                 return
 
             # Left click adds point; right click moves nearest centroid
             if event.button == 1:
                 if self.battle_mode:
-                    half = WIDTH // 2
+                    half = w // 2
                     model_x = mx * 2 if mx < half else (mx - half) * 2
-                    model_x = max(SIDE_MARGIN, min(WIDTH - SIDE_MARGIN, model_x))
+                    model_x = max(config.SIDE_MARGIN, min(w - config.SIDE_MARGIN, model_x))
                     new_a = Point(model_x, my)
                     new_b = Point(model_x, my)
                     self.points.append(new_a)
@@ -728,13 +718,15 @@ class GameScene:
                     self._invalidate_voronoi_cache()
                 else:
                     self.points.append(Point(mx, my))
-                    self.particles.append(ParticleEffect(mx, my, COLORS[random.randint(0, len(COLORS) - 1)]))
+                    self.particles.append(
+                        ParticleEffect(mx, my, config.COLORS[random.randint(0, len(config.COLORS) - 1)])
+                    )
             elif event.button == 3:
                 threshold_sq = 40 * 40
                 if self.battle_mode:
-                    half = WIDTH // 2
+                    half = w // 2
                     model_x = mx * 2 if mx < half else (mx - half) * 2
-                    model_x = max(SIDE_MARGIN, min(WIDTH - SIDE_MARGIN, model_x))
+                    model_x = max(config.SIDE_MARGIN, min(w - config.SIDE_MARGIN, model_x))
 
                     def move_nearest(centroids):
                         min_dist_sq = float("inf")
@@ -815,8 +807,8 @@ class GameScene:
             if cid == -1:
                 return (120, 120, 135)
             # Reuse palette first, then deterministic extra colors.
-            if cid < len(COLORS):
-                return COLORS[cid]
+            if cid < len(config.COLORS):
+                return config.COLORS[cid]
             # Deterministic pseudo-random color based on cid (no global RNG state)
             r = (37 * cid + 90) % 220 + 30
             g = (57 * cid + 140) % 220 + 30
@@ -900,7 +892,7 @@ class GameScene:
             pe.draw(screen, x_scale=x_scale, x_offset=view_rect.x, y_offset=view_rect.y)
 
         # Side label
-        label = self.app.small_font.render(side_label, True, TEXT_COLOR)
+        label = self.app.small_font.render(side_label, True, config.TEXT_COLOR)
         screen.blit(label, (view_rect.x + 10, view_rect.y + 10))
 
         # Status badge(s) near the model (important in battle mode)
@@ -932,30 +924,37 @@ class GameScene:
     def draw_input_dialog(self):
         dialog_width = 460
         dialog_height = 170
-        dialog_x = (WIDTH - dialog_width) // 2
-        dialog_y = (HEIGHT - dialog_height) // 2
+        w, h = self.app.screen.get_size()
+        dialog_x = (w - dialog_width) // 2
+        dialog_y = (h - dialog_height) // 2
 
         shadow = pygame.Surface((dialog_width + 12, dialog_height + 12), pygame.SRCALPHA)
         pygame.draw.rect(shadow, (0, 0, 0, 120), (0, 0, dialog_width + 12, dialog_height + 12), border_radius=12)
         self.app.screen.blit(shadow, (dialog_x - 6, dialog_y - 6))
 
-        pygame.draw.rect(self.app.screen, UI_BG, (dialog_x, dialog_y, dialog_width, dialog_height), border_radius=10)
-        pygame.draw.rect(self.app.screen, COLORS[2], (dialog_x, dialog_y, dialog_width, dialog_height), 3, border_radius=10)
+        pygame.draw.rect(self.app.screen, config.UI_BG, (dialog_x, dialog_y, dialog_width, dialog_height), border_radius=10)
+        pygame.draw.rect(
+            self.app.screen,
+            config.COLORS[2 % len(config.COLORS)],
+            (dialog_x, dialog_y, dialog_width, dialog_height),
+            3,
+            border_radius=10,
+        )
 
         title = "Enter Number of Points" if self.input_field == "points" else "Enter Number of Clusters (K)"
-        title_s = self.app.font.render(title, True, TEXT_COLOR)
+        title_s = self.app.font.render(title, True, config.TEXT_COLOR)
         self.app.screen.blit(title_s, (dialog_x + 20, dialog_y + 18))
 
         input_box = pygame.Rect(dialog_x + 20, dialog_y + 65, dialog_width - 40, 46)
-        pygame.draw.rect(self.app.screen, BG_COLOR, input_box, border_radius=8)
-        pygame.draw.rect(self.app.screen, COLORS[1], input_box, 2, border_radius=8)
+        pygame.draw.rect(self.app.screen, config.BG_COLOR, input_box, border_radius=8)
+        pygame.draw.rect(self.app.screen, config.COLORS[1 % len(config.COLORS)], input_box, 2, border_radius=8)
 
         txt = self.input_text + "|"
-        txt_s = self.app.font.render(txt, True, TEXT_COLOR)
+        txt_s = self.app.font.render(txt, True, config.TEXT_COLOR)
         self.app.screen.blit(txt_s, (input_box.x + 12, input_box.y + 8))
 
         hint = "ENTER: confirm   ESC: cancel   BACKSPACE: delete"
-        hint_s = self.app.menu_hint_font.render(hint, True, COLORS[3])
+        hint_s = self.app.menu_hint_font.render(hint, True, config.COLORS[3 % len(config.COLORS)])
         self.app.screen.blit(hint_s, (dialog_x + 20, dialog_y + 125))
 
     def draw_convergence_graph_for(self, history, graph_x, graph_y, border_color, line_color, title_text):
@@ -965,7 +964,7 @@ class GameScene:
             return
 
         s = pygame.Surface((graph_width, graph_height), pygame.SRCALPHA)
-        pygame.draw.rect(s, (*UI_BG, 240), (0, 0, graph_width, graph_height), border_radius=10)
+        pygame.draw.rect(s, (*config.UI_BG, 240), (0, 0, graph_width, graph_height), border_radius=10)
         pygame.draw.rect(s, border_color, (0, 0, graph_width, graph_height), 2, border_radius=10)
         self.app.screen.blit(s, (graph_x, graph_y))
 
@@ -995,11 +994,33 @@ class GameScene:
         self.app.screen.blit(cur_s, (graph_x + 8, graph_y + graph_height - 22))
 
     def draw_convergence_graph(self):
+        w, _h = self.app.screen.get_size()
         if self.battle_mode:
-            self.draw_convergence_graph_for(self.inertia_history, 10, 40, COLORS[2], COLORS[1], "A: Inertia")
-            self.draw_convergence_graph_for(self.inertia_history_b, WIDTH - 330, 40, COLORS[0], COLORS[1], "B: Inertia")
+            self.draw_convergence_graph_for(
+                self.inertia_history,
+                10,
+                40,
+                config.COLORS[2 % len(config.COLORS)],
+                config.COLORS[1 % len(config.COLORS)],
+                "A: Inertia",
+            )
+            self.draw_convergence_graph_for(
+                self.inertia_history_b,
+                w - 330,
+                40,
+                config.COLORS[0],
+                config.COLORS[1 % len(config.COLORS)],
+                "B: Inertia",
+            )
         else:
-            self.draw_convergence_graph_for(self.inertia_history, 10, 10, COLORS[2], COLORS[1], "Convergence (Inertia)")
+            self.draw_convergence_graph_for(
+                self.inertia_history,
+                10,
+                10,
+                config.COLORS[2 % len(config.COLORS)],
+                config.COLORS[1 % len(config.COLORS)],
+                "Convergence (Inertia)",
+            )
 
     def draw_elbow_method(self):
         if not self.elbow_data or len(self.elbow_data) < 2:
@@ -1007,15 +1028,16 @@ class GameScene:
 
         panel_width = 340
         panel_height = 240
-        panel_x = WIDTH - panel_width - 10
-        panel_y = HEIGHT - UI_PANEL_HEIGHT - panel_height - 10
+        w, h = self.app.screen.get_size()
+        panel_x = w - panel_width - 10
+        panel_y = h - config.UI_PANEL_HEIGHT - panel_height - 10
 
         s = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        pygame.draw.rect(s, (*UI_BG, 240), (0, 0, panel_width, panel_height), border_radius=10)
-        pygame.draw.rect(s, COLORS[0], (0, 0, panel_width, panel_height), 2, border_radius=10)
+        pygame.draw.rect(s, (*config.UI_BG, 240), (0, 0, panel_width, panel_height), border_radius=10)
+        pygame.draw.rect(s, config.COLORS[0], (0, 0, panel_width, panel_height), 2, border_radius=10)
         self.app.screen.blit(s, (panel_x, panel_y))
 
-        title = self.app.small_font.render("Elbow Method (K vs Inertia)", True, COLORS[0])
+        title = self.app.small_font.render("Elbow Method (K vs Inertia)", True, config.COLORS[0])
         self.app.screen.blit(title, (panel_x + 12, panel_y + 10))
 
         max_inertia = max(v for _, v in self.elbow_data)
@@ -1034,11 +1056,11 @@ class GameScene:
             pts.append((x, y))
 
         if len(pts) > 1:
-            pygame.draw.lines(self.app.screen, COLORS[1], False, pts, 2)
+            pygame.draw.lines(self.app.screen, config.COLORS[1 % len(config.COLORS)], False, pts, 2)
         for i, (k, inertia) in enumerate(self.elbow_data):
             x, y = pts[i]
-            pygame.draw.circle(self.app.screen, COLORS[1], (int(x), int(y)), 4)
-            ks = self.app.tiny_font.render(f"K={k}", True, TEXT_COLOR)
+            pygame.draw.circle(self.app.screen, config.COLORS[1 % len(config.COLORS)], (int(x), int(y)), 4)
+            ks = self.app.tiny_font.render(f"K={k}", True, config.TEXT_COLOR)
             self.app.screen.blit(ks, (int(x) - 10, int(y) + 6))
 
     def draw_stats_panel(self):
@@ -1046,7 +1068,8 @@ class GameScene:
             return
         panel_width = 300
         panel_x = 10
-        panel_y = HEIGHT - UI_PANEL_HEIGHT - 340
+        _w, h = self.app.screen.get_size()
+        panel_y = h - config.UI_PANEL_HEIGHT - 340
 
         metrics = self.calculate_cluster_metrics()
         inertia = self.calculate_inertia()
@@ -1067,20 +1090,20 @@ class GameScene:
         panel_height = min(420, lines * 18 + 20)
 
         s = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        pygame.draw.rect(s, (*UI_BG, 240), (0, 0, panel_width, panel_height), border_radius=10)
-        pygame.draw.rect(s, COLORS[4], (0, 0, panel_width, panel_height), 2, border_radius=10)
+        pygame.draw.rect(s, (*config.UI_BG, 240), (0, 0, panel_width, panel_height), border_radius=10)
+        pygame.draw.rect(s, config.COLORS[4 % len(config.COLORS)], (0, 0, panel_width, panel_height), 2, border_radius=10)
         self.app.screen.blit(s, (panel_x, panel_y))
 
         y = panel_y + 10
-        title = self.app.small_font.render("ADVANCED STATS", True, COLORS[4])
+        title = self.app.small_font.render("ADVANCED STATS", True, config.COLORS[4 % len(config.COLORS)])
         self.app.screen.blit(title, (panel_x + 10, y))
         y += 26
 
         for txt, col in [
-            (f"Inertia (WCSS): {int(inertia)}", COLORS[1]),
-            (f"Min Separation: {int(min_sep)}", TEXT_COLOR),
-            ("", TEXT_COLOR),
-            ("Per-Cluster:", COLORS[2]),
+            (f"Inertia (WCSS): {int(inertia)}", config.COLORS[1 % len(config.COLORS)]),
+            (f"Min Separation: {int(min_sep)}", config.TEXT_COLOR),
+            ("", config.TEXT_COLOR),
+            ("Per-Cluster:", config.COLORS[2 % len(config.COLORS)]),
         ]:
             if txt:
                 surf = self.app.tiny_font.render(txt, True, col)
@@ -1092,9 +1115,9 @@ class GameScene:
                 continue
             block = [
                 (f"Cluster {i+1}:", self.centroids[i].color),
-                (f"  Size: {m['size']}", TEXT_COLOR),
-                (f"  Avg Dist: {m['avg_distance']:.1f}", TEXT_COLOR),
-                (f"  Compactness: {m['compactness']:.2f}", TEXT_COLOR),
+                (f"  Size: {m['size']}", config.TEXT_COLOR),
+                (f"  Avg Dist: {m['avg_distance']:.1f}", config.TEXT_COLOR),
+                (f"  Compactness: {m['compactness']:.2f}", config.TEXT_COLOR),
             ]
             for txt, col in block:
                 surf = self.app.tiny_font.render(txt, True, col)
@@ -1107,31 +1130,32 @@ class GameScene:
             return
 
         lines = [
-            ("DEBUG", COLORS[3]),
-            (f"FPS: {int(self.app.fps)}", TEXT_COLOR),
-            (f"Algo A: {self.algorithm}", TEXT_COLOR),
-            (f"K: {self.k}", TEXT_COLOR),
-            (f"DBSCAN eps: {self.dbscan_eps}", TEXT_COLOR),
-            (f"DBSCAN min: {self.dbscan_min_samples}", TEXT_COLOR),
-            (f"Auto: {'On' if self.auto_iterate else 'Off'}", TEXT_COLOR),
-            (f"Converged: {'Yes' if self.converged else 'No'}", TEXT_COLOR),
+            ("DEBUG", config.COLORS[3 % len(config.COLORS)]),
+            (f"FPS: {int(self.app.fps)}", config.TEXT_COLOR),
+            (f"Algo A: {self.algorithm}", config.TEXT_COLOR),
+            (f"K: {self.k}", config.TEXT_COLOR),
+            (f"DBSCAN eps: {self.dbscan_eps}", config.TEXT_COLOR),
+            (f"DBSCAN min: {self.dbscan_min_samples}", config.TEXT_COLOR),
+            (f"Auto: {'On' if self.auto_iterate else 'Off'}", config.TEXT_COLOR),
+            (f"Converged: {'Yes' if self.converged else 'No'}", config.TEXT_COLOR),
         ]
         if self.battle_mode:
             lines += [
-                (f"Algo B: {self.algorithm_b}", TEXT_COLOR),
-                (f"Conv B: {'Yes' if self.converged_b else 'No'}", TEXT_COLOR),
+                (f"Algo B: {self.algorithm_b}", config.TEXT_COLOR),
+                (f"Conv B: {'Yes' if self.converged_b else 'No'}", config.TEXT_COLOR),
             ]
 
         panel_w = 240
         pad = 10
         line_h = 18
         panel_h = min(260, max(110, pad * 2 + len(lines) * line_h))
-        panel_x = WIDTH - panel_w - 10
+        w, _h = self.app.screen.get_size()
+        panel_x = w - panel_w - 10
         panel_y = 10
 
         s = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-        pygame.draw.rect(s, (*UI_BG, 240), (0, 0, panel_w, panel_h), border_radius=10)
-        pygame.draw.rect(s, COLORS[3], (0, 0, panel_w, panel_h), 2, border_radius=10)
+        pygame.draw.rect(s, (*config.UI_BG, 240), (0, 0, panel_w, panel_h), border_radius=10)
+        pygame.draw.rect(s, config.COLORS[3 % len(config.COLORS)], (0, 0, panel_w, panel_h), 2, border_radius=10)
         self.app.screen.blit(s, (panel_x, panel_y))
 
         y = panel_y + pad
@@ -1142,23 +1166,24 @@ class GameScene:
 
     def draw(self):
         screen = self.app.screen
-        screen.fill(BG_COLOR)
+        w, h = screen.get_size()
+        screen.fill(config.BG_COLOR)
 
-        play_h = HEIGHT - UI_PANEL_HEIGHT
-        play_rect = pygame.Rect(0, 0, WIDTH, play_h)
+        play_h = h - config.UI_PANEL_HEIGHT
+        play_rect = pygame.Rect(0, 0, w, play_h)
 
         # Draw play area border
         pygame.draw.rect(screen, (25, 25, 34), play_rect)
 
         if self.battle_mode:
-            half = WIDTH // 2
+            half = w // 2
             left_view = pygame.Rect(0, 0, half, play_h)
             right_view = pygame.Rect(half, 0, half, play_h)
             a_done = self.converged
             b_done = self.converged_b
             mode_tag = "AUTO" if self.auto_iterate else "MANUAL"
-            a_color = COLORS[1] if a_done else COLORS[0]
-            b_color = COLORS[1] if b_done else COLORS[0]
+            a_color = config.COLORS[1 % len(config.COLORS)] if a_done else config.COLORS[0]
+            b_color = config.COLORS[1 % len(config.COLORS)] if b_done else config.COLORS[0]
             a_state = "CONVERGED ✓" if a_done else "RUNNING"
             b_state = "CONVERGED ✓" if b_done else "RUNNING"
 
@@ -1182,8 +1207,8 @@ class GameScene:
                 f"A: {self.algorithm}",
                 status_lines=[
                     (f"{mode_tag} | {a_state}", a_color),
-                    (f"Iter: {self.iteration_count}", TEXT_COLOR),
-                    (a_extra, TEXT_COLOR),
+                    (f"Iter: {self.iteration_count}", config.TEXT_COLOR),
+                    (a_extra, config.TEXT_COLOR),
                 ],
             )
             self._draw_model_view(
@@ -1196,15 +1221,15 @@ class GameScene:
                 f"B: {self.algorithm_b}",
                 status_lines=[
                     (f"{mode_tag} | {b_state}", b_color),
-                    (f"Iter: {self.iteration_count_b}", TEXT_COLOR),
-                    (b_extra, TEXT_COLOR),
+                    (f"Iter: {self.iteration_count_b}", config.TEXT_COLOR),
+                    (b_extra, config.TEXT_COLOR),
                 ],
             )
             pygame.draw.line(screen, (80, 80, 110), (half, 0), (half, play_h), 2)
         else:
             done = self.converged
             mode_tag = "AUTO" if self.auto_iterate else "MANUAL"
-            state_color = COLORS[1] if done else COLORS[0]
+            state_color = config.COLORS[1 % len(config.COLORS)] if done else config.COLORS[0]
             state = "CONVERGED ✓" if done else "RUNNING"
             extra = None
             if self.algorithm == "dbscan":
@@ -1220,8 +1245,8 @@ class GameScene:
                 f"{self.algorithm}",
                 status_lines=[
                     (f"{mode_tag} | {state}", state_color),
-                    (f"Iter: {self.iteration_count}", TEXT_COLOR),
-                    (extra, TEXT_COLOR),
+                    (f"Iter: {self.iteration_count}", config.TEXT_COLOR),
+                    (extra, config.TEXT_COLOR),
                 ],
             )
 
@@ -1236,13 +1261,13 @@ class GameScene:
         self._draw_tutorial_overlay()
 
         # Bottom UI bar
-        ui_rect = pygame.Rect(0, HEIGHT - UI_PANEL_HEIGHT, WIDTH, UI_PANEL_HEIGHT)
-        pygame.draw.rect(screen, UI_BG, ui_rect)
-        pygame.draw.line(screen, (80, 80, 110), (0, ui_rect.y), (WIDTH, ui_rect.y), 2)
+        ui_rect = pygame.Rect(0, h - config.UI_PANEL_HEIGHT, w, config.UI_PANEL_HEIGHT)
+        pygame.draw.rect(screen, config.UI_BG, ui_rect)
+        pygame.draw.line(screen, (80, 80, 110), (0, ui_rect.y), (w, ui_rect.y), 2)
 
         # Responsive HUD: header + two columns (wrap as needed)
         fully_converged = self.converged and (not self.battle_mode or self.converged_b)
-        status_color = COLORS[1] if fully_converged else COLORS[0]
+        status_color = config.COLORS[1 % len(config.COLORS)] if fully_converged else config.COLORS[0]
         status_text = "CONVERGED ✓" if fully_converged else ("AUTO" if self.auto_iterate else "PAUSED")
 
         if self.algorithm == "kmeans":
@@ -1265,7 +1290,7 @@ class GameScene:
         header_left = f"{status_text}  |  Dataset: {self.dataset_type.upper()}  |  Voronoi: {'ON' if self.show_voronoi else 'OFF'}"
         header_y = ui_rect.y + 10
         screen.blit(self.app.small_font.render(header_left, True, status_color), (20, header_y))
-        right_header = self.app.small_font.render(mode_text, True, TEXT_COLOR)
+        right_header = self.app.small_font.render(mode_text, True, config.TEXT_COLOR)
         screen.blit(right_header, (ui_rect.right - right_header.get_width() - 20, header_y))
 
         # Columns
@@ -1333,9 +1358,9 @@ class GameScene:
             if y + line_h > ui_rect.bottom - bottom_pad:
                 break
             if i < len(left_lines):
-                screen.blit(self.app.tiny_font.render(left_lines[i], True, TEXT_COLOR), (left_x, y))
+                screen.blit(self.app.tiny_font.render(left_lines[i], True, config.TEXT_COLOR), (left_x, y))
             if i < len(right_lines):
-                screen.blit(self.app.tiny_font.render(right_lines[i], True, TEXT_COLOR), (right_x, y))
+                screen.blit(self.app.tiny_font.render(right_lines[i], True, config.TEXT_COLOR), (right_x, y))
             y += line_h
 
         if self.input_active:

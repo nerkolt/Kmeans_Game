@@ -5,7 +5,7 @@ import pygame
 
 import csv_io
 import datasets
-from config import BG_COLOR, COLORS, HEIGHT, TEXT_COLOR, UI_BG, WIDTH
+import config
 
 
 class MenuScene:
@@ -129,16 +129,17 @@ class MenuScene:
             return
 
         n = max(10, min(150, int(self.menu_points)))
+        w, h = self.app.screen.get_size()
         if self.menu_dataset == "random":
-            pts = datasets.generate_spaced_random_points(n)
+            pts = datasets.generate_spaced_random_points(n, width=w, height=h)
         elif self.menu_dataset == "blobs":
-            pts = datasets.generate_blobs(n, centers=max(2, min(5, self.menu_k)))
+            pts = datasets.generate_blobs(n, centers=max(2, min(5, self.menu_k)), width=w, height=h)
         elif self.menu_dataset == "moons":
-            pts = datasets.generate_moons(n)
+            pts = datasets.generate_moons(n, width=w, height=h)
         elif self.menu_dataset == "circles":
-            pts = datasets.generate_circles(n)
+            pts = datasets.generate_circles(n, width=w, height=h)
         else:
-            pts = datasets.generate_spaced_random_points(n)
+            pts = datasets.generate_spaced_random_points(n, width=w, height=h)
 
         self._preview_xy = [(p.x, p.y) for p in pts]
 
@@ -296,10 +297,11 @@ class MenuScene:
 
     def draw(self):
         screen = self.app.screen
-        screen.fill(BG_COLOR)
+        w, h = screen.get_size()
+        screen.fill(config.BG_COLOR)
 
-        title = self.app.menu_title_font.render("Clustering Lab", True, COLORS[1])
-        subtitle = self.app.menu_section_font.render("Choose settings then press ENTER to start", True, TEXT_COLOR)
+        title = self.app.menu_title_font.render("Clustering Lab", True, config.COLORS[1])
+        subtitle = self.app.menu_section_font.render("Choose settings then press ENTER to start", True, config.TEXT_COLOR)
         screen.blit(title, (24, 18))
         screen.blit(subtitle, (24, 62))
 
@@ -308,18 +310,18 @@ class MenuScene:
 
         top_y = 110
         bottom_h = 120
-        content_h = HEIGHT - bottom_h - top_y - 10
+        content_h = h - bottom_h - top_y - 10
 
         left_w = 420
         left = pygame.Rect(20, top_y, left_w, content_h)
-        right = pygame.Rect(left.right + 15, top_y, WIDTH - (left.right + 15) - 20, content_h)
+        right = pygame.Rect(left.right + 15, top_y, w - (left.right + 15) - 20, content_h)
 
-        pygame.draw.rect(screen, UI_BG, left, border_radius=14)
-        pygame.draw.rect(screen, COLORS[3], left, 2, border_radius=14)
-        pygame.draw.rect(screen, UI_BG, right, border_radius=14)
-        pygame.draw.rect(screen, COLORS[2], right, 2, border_radius=14)
+        pygame.draw.rect(screen, config.UI_BG, left, border_radius=14)
+        pygame.draw.rect(screen, config.COLORS[3 % len(config.COLORS)], left, 2, border_radius=14)
+        pygame.draw.rect(screen, config.UI_BG, right, border_radius=14)
+        pygame.draw.rect(screen, config.COLORS[2 % len(config.COLORS)], right, 2, border_radius=14)
 
-        s_title = self.app.menu_section_font.render("Settings", True, TEXT_COLOR)
+        s_title = self.app.menu_section_font.render("Settings", True, config.TEXT_COLOR)
         screen.blit(s_title, (left.x + 16, left.y + 12))
 
         # Auto-fit rows so the menu always fits all items (no clipping)
@@ -342,7 +344,7 @@ class MenuScene:
 
             if selected:
                 pygame.draw.rect(screen, (70, 90, 130), row_rect, border_radius=10)
-                pygame.draw.rect(screen, COLORS[1], row_rect, 2, border_radius=10)
+                pygame.draw.rect(screen, config.COLORS[1 % len(config.COLORS)], row_rect, 2, border_radius=10)
 
             label = it["label"]
             value_text = ""
@@ -358,8 +360,8 @@ class MenuScene:
             elif it["type"] == "action":
                 value_text = "ENTER"
 
-            label_s = row_font.render(label, True, TEXT_COLOR if not selected else (255, 255, 255))
-            value_s = row_font.render(value_text, True, COLORS[1] if selected else TEXT_COLOR)
+            label_s = row_font.render(label, True, config.TEXT_COLOR if not selected else (255, 255, 255))
+            value_s = row_font.render(value_text, True, config.COLORS[1 % len(config.COLORS)] if selected else config.TEXT_COLOR)
 
             text_y = row_rect.y + max(0, (row_rect.h - label_s.get_height()) // 2)
             screen.blit(label_s, (row_rect.x + 12, text_y))
@@ -367,7 +369,7 @@ class MenuScene:
 
             row_y += row_h + gap
 
-        p_title = self.app.menu_section_font.render("Preview", True, TEXT_COLOR)
+        p_title = self.app.menu_section_font.render("Preview", True, config.TEXT_COLOR)
         screen.blit(p_title, (right.x + 16, right.y + 12))
 
         preview_rect = pygame.Rect(right.x + 14, right.y + 50, right.w - 28, right.h - 64)
@@ -375,7 +377,7 @@ class MenuScene:
         pygame.draw.rect(screen, (70, 70, 95), preview_rect, 2, border_radius=12)
 
         if self.menu_dataset == "csv" and not self.csv_points:
-            msg = self.app.menu_item_font.render("No CSV loaded. Press I or select Import CSV.", True, COLORS[0])
+            msg = self.app.menu_item_font.render("No CSV loaded. Press I or select Import CSV.", True, config.COLORS[0])
             screen.blit(msg, (preview_rect.x + 12, preview_rect.y + 12))
         else:
             xy = self._preview_xy
@@ -413,21 +415,21 @@ class MenuScene:
                 out.append(cur)
             return out
 
-        max_help_w = WIDTH - 44
+        max_help_w = w - 44
         help_wrapped = []
         for t in help_lines:
             help_wrapped += wrap(self.app.menu_hint_font, t, max_help_w)
 
-        by = HEIGHT - 92
+        by = h - 92
         for i, t in enumerate(help_wrapped[:4]):
             surf = self.app.menu_hint_font.render(t, True, (180, 180, 195))
             screen.blit(surf, (22, by + i * 22))
 
         # Message toast
         if self.menu_message and pygame.time.get_ticks() < self.menu_message_until:
-            box = pygame.Rect(WIDTH - 420, HEIGHT - 96, 395, 56)
+            box = pygame.Rect(w - 420, h - 96, 395, 56)
             pygame.draw.rect(screen, (0, 0, 0), box, border_radius=10)
-            pygame.draw.rect(screen, COLORS[1], box, 2, border_radius=10)
+            pygame.draw.rect(screen, config.COLORS[1 % len(config.COLORS)], box, 2, border_radius=10)
             msg = self.app.menu_item_font.render(self.menu_message, True, (255, 255, 255))
             screen.blit(msg, (box.x + 12, box.y + 16))
 

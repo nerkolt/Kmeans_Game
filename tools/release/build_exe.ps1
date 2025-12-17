@@ -6,6 +6,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Always run from repo root (so relative paths work even if launched elsewhere)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Resolve-Path (Join-Path $ScriptDir "..\..")
+Set-Location $RepoRoot
+
 Write-Host "Building $Name ($Mode)..." -ForegroundColor Cyan
 
 python -m pip install --upgrade pip | Out-Host

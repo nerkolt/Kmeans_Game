@@ -1,13 +1,13 @@
-; Inno Setup installer for KmeansGame
+; Inno Setup installer for Clustering-Visualizer-Game
 ; Publisher: Nour Ltaief
 ; Icon source: Assets/logo.png (converted to build/logo.ico by tools/make_icon.py)
 
-#define AppName "KmeansGame"
+#define AppName "ClusteringVisualizerGame"
 #define AppPublisher "Nour Ltaief"
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-#define AppExeName "KmeansGame.exe"
+#define AppExeName "ClusteringVisualizerGame.exe"
 
 [Setup]
 AppId={{6F94884C-9AE9-49E0-A8D7-7F09E4F2A1C1}}
@@ -33,7 +33,7 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Files]
 ; Bundle the PyInstaller one-folder output
-Source: "dist\KmeansGame\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\ClusteringVisualizerGame\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

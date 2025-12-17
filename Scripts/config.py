@@ -1,9 +1,13 @@
 """
 Central configuration/constants for the clustering visualizer.
-Keeping this separate makes the rest of the code easier to read and change.
+
+Note: Some settings (window size + color palette) can be changed at runtime
+from the Start/Options menu. For that reason, other modules should prefer
+`import config` and read `config.WIDTH`, `config.HEIGHT`, `config.COLORS`, etc.
+instead of importing the values directly.
 """
 
-# Window
+# Window (default)
 WIDTH, HEIGHT = 1200, 800
 FPS = 60
 
@@ -16,8 +20,8 @@ SIDE_MARGIN = 80
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-# Modern color palette (softer, more aesthetic)
-COLORS = [
+# Palettes
+DEFAULT_COLORS = [
     (255, 107, 107),  # Coral Red
     (78, 205, 196),   # Turquoise
     (255, 159, 243),  # Pink
@@ -36,6 +40,35 @@ COLORS = [
     (0, 206, 201),    # Cyan
     (214, 48, 49),    # Red
 ]
+
+# Colorblind-friendly palette (Okabe-Ito inspired + a few extras)
+# High contrast, less reliance on red/green separation.
+COLORBLIND_COLORS = [
+    (0, 114, 178),    # Blue
+    (230, 159, 0),    # Orange
+    (0, 158, 115),    # Bluish Green
+    (204, 121, 167),  # Reddish Purple
+    (86, 180, 233),   # Sky Blue
+    (213, 94, 0),     # Vermillion
+    (240, 228, 66),   # Yellow
+    (160, 160, 160),  # Gray
+    (0, 0, 0),        # Black
+]
+
+# Active palette (default)
+COLORS = list(DEFAULT_COLORS)
+
+
+def set_palette(mode: str) -> None:
+    """
+    Switch the active cluster palette.
+    mode: "default" | "colorblind"
+    """
+    global COLORS
+    if str(mode).lower().startswith("color"):
+        COLORS = list(COLORBLIND_COLORS)
+    else:
+        COLORS = list(DEFAULT_COLORS)
 
 BG_COLOR = (32, 32, 42)  # Dark blue-gray background
 UI_BG = (45, 45, 58)

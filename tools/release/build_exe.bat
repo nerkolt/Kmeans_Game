@@ -1,6 +1,9 @@
 @echo off
 setlocal
 
+REM Always run from repo root (so relative paths work even if launched elsewhere)
+pushd "%~dp0\..\.."
+
 REM Usage:
 REM   build_exe.bat onedir
 REM   build_exe.bat onefile
@@ -60,5 +63,7 @@ if /I "%MODE%"=="onefile" (
 )
 
 endlocal
+
+popd
 
 
