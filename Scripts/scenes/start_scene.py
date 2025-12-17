@@ -326,7 +326,7 @@ class StartScene:
         screen.blit(label, (base.centerx - label.get_width() // 2, base.centery - label.get_height() // 2))
 
     def _draw_main(self, screen):
-        panel = self._draw_panel(screen, "Kmeans Game", "A mini data-mining visualizer", bounce_title=True)
+        panel = self._draw_panel(screen, "Clustering Visualizer Game", "A mini data-mining visualizer", bounce_title=True)
 
         # Cute little orbiting dots logo (no external assets needed)
         cx = panel.centerx

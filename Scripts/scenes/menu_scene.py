@@ -300,7 +300,7 @@ class MenuScene:
         w, h = screen.get_size()
         screen.fill(config.BG_COLOR)
 
-        title = self.app.menu_title_font.render("Clustering Lab", True, config.COLORS[1])
+        title = self.app.menu_title_font.render("Clustering Visualizer Game", True, config.COLORS[1])
         subtitle = self.app.menu_section_font.render("Choose settings then press ENTER to start", True, config.TEXT_COLOR)
         screen.blit(title, (24, 18))
         screen.blit(subtitle, (24, 62))

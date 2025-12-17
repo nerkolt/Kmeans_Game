@@ -1,7 +1,7 @@
 param(
     [ValidateSet("onedir","onefile","installer")]
     [string]$Mode = "onedir",
-    [string]$Name = "KmeansGame"
+    [string]$Name = "ClusteringVisualizerGame"
 )
 
 $ErrorActionPreference = "Stop"

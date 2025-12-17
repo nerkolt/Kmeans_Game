@@ -8,7 +8,7 @@ Perfect for:
 - Enjoying beautiful data visualizations
 - Understanding machine learning concepts visually
 
-![K-Means Game](Assets/Start.png)
+![Clustering Visualizer Game](Assets/Start.png)
 
 <a id="toc"></a>
 ## 📑 Table of Contents
@@ -147,7 +147,7 @@ From the project root:
 tools/release/build_exe.bat onedir
 ```
 
-Output: `dist/KmeansGame/KmeansGame.exe`
+Output: `dist/ClusteringVisualizerGame/ClusteringVisualizerGame.exe`
 
 ### Option B: single-file build
 
@@ -155,7 +155,7 @@ Output: `dist/KmeansGame/KmeansGame.exe`
 tools/release/build_exe.bat onefile
 ```
 
-Output: `dist/KmeansGame.exe`
+Output: `dist/ClusteringVisualizerGame.exe`
 
 ### Notes / troubleshooting
 
@@ -183,7 +183,7 @@ tools/release/build_exe.bat installer
 ```
 
 Output:
-- `dist-installer/KmeansGame-Setup-<version>.exe`
+- `dist-installer/ClusteringVisualizerGame-Setup-<version>.exe`
 
 Details:
 - **Publisher**: Nour Ltaief
@@ -199,8 +199,8 @@ git push origin v1.0.0
 ```
 
 The workflow will attach these files to the GitHub Release:
-- `dist-installer/KmeansGame-Setup-<version>.exe`
-- `dist/KmeansGame/KmeansGame.exe`
+- `dist-installer/ClusteringVisualizerGame-Setup-<version>.exe`
+- `dist/ClusteringVisualizerGame/ClusteringVisualizerGame.exe`
 
 <a id="controls"></a>
 ## Controls & Usage

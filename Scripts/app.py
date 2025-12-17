@@ -8,7 +8,7 @@ class App:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
-        pygame.display.set_caption("Clustering Visualizer (K‑Means / K‑Medoids / DBSCAN)")
+        pygame.display.set_caption("Clustering Visualizer Game")
         self.clock = pygame.time.Clock()
 
         # Fonts (shared across scenes)

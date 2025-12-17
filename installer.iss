@@ -1,8 +1,9 @@
-; Inno Setup installer for Clustering-Visualizer-Game
+; Inno Setup installer for Clustering Visualizer Game
 ; Publisher: Nour Ltaief
 ; Icon source: Assets/logo.png (converted to build/logo.ico by tools/make_icon.py)
 
-#define AppName "ClusteringVisualizerGame"
+#define AppDisplayName "Clustering Visualizer Game"
+#define AppIdName "ClusteringVisualizerGame"
 #define AppPublisher "Nour Ltaief"
 #ifndef AppVersion
   #define AppVersion "1.0.0"
@@ -11,14 +12,14 @@
 
 [Setup]
 AppId={{6F94884C-9AE9-49E0-A8D7-7F09E4F2A1C1}}
-AppName={#AppName}
+AppName={#AppDisplayName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
-DefaultDirName={autopf}\{#AppName}
-DefaultGroupName={#AppName}
+DefaultDirName={autopf}\{#AppIdName}
+DefaultGroupName={#AppDisplayName}
 DisableProgramGroupPage=yes
 OutputDir=dist-installer
-OutputBaseFilename={#AppName}-Setup-{#AppVersion}
+OutputBaseFilename={#AppIdName}-Setup-{#AppVersion}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -36,10 +37,10 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 Source: "dist\ClusteringVisualizerGame\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
+Name: "{group}\{#AppDisplayName}"; Filename: "{app}\{#AppExeName}"
+Name: "{userdesktop}\{#AppDisplayName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppDisplayName}"; Flags: nowait postinstall skipifsilent
 
 

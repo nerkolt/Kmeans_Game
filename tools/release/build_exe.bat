@@ -12,7 +12,7 @@ REM Default: onedir
 
 set MODE=%1
 if "%MODE%"=="" set MODE=onedir
-set NAME=KmeansGame
+set NAME=ClusteringVisualizerGame
 
 echo Building %NAME% (%MODE%)...
 

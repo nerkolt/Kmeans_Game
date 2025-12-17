@@ -47,7 +47,7 @@ jobs:
 
       - name: Build EXE (onedir)
         run: |
-          python -m PyInstaller --noconfirm --clean --windowed --name KmeansGame --icon build/logo.ico --paths Scripts Scripts\Kmeans_Game_Debug.py
+          python -m PyInstaller --noconfirm --clean --windowed --name ClusteringVisualizerGame --icon build/logo.ico --paths Scripts Scripts\Kmeans_Game_Debug.py
         shell: pwsh
 
       - name: Build Installer (Inno Setup)
@@ -74,7 +74,7 @@ jobs:
         with:
           name: windows-artifacts
           path: |
-            dist/KmeansGame/**
+            dist/ClusteringVisualizerGame/**
             dist-installer/*.exe
 
       - name: Publish to GitHub Release
@@ -82,6 +82,6 @@ jobs:
         with:
           files: |
             dist-installer/*.exe
-            dist/KmeansGame/KmeansGame.exe
+            dist/ClusteringVisualizerGame/ClusteringVisualizerGame.exe
 
 
