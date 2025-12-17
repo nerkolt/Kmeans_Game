@@ -174,8 +174,8 @@ git push origin v1.0.0
 The workflow will attach these files to the GitHub Release:
 - `dist-installer/ClusteringVisualizerGame-Setup-<version>.exe`
 - `dist/ClusteringVisualizerGame/ClusteringVisualizerGame.exe`
-
-![Workflow Video ](https://youtu.be/ufjzCj4FKxQ)
+![Workflow Video ](Assets/Thumbnails/WORKFLOWThumbnail.png)
+Watch the [Workflow Video ](https://youtu.be/ufjzCj4FKxQ)
 
 <a id="controls"></a>
 ## Controls & Usage
@@ -372,6 +372,8 @@ Kmeans_Game/
 ```
 <a id="demo"></a>
 ## Demo
+
+![Game Demo ](Assets/Thumbnails/Thumbnail.png)
 Check Full [Demo](https://www.youtube.com/watch?v=BRvdO-Si3_c) :
 
 <a id="bibliography"></a>
